@@ -34,10 +34,14 @@
 
   <link rel="stylesheet" href="/style.css">
 
-  <!-- Cloudflare Turnstile Hook Point (Phase 3 Preparation):
-       Uncomment and specify your sitekey when Turnstile bot protection is activated.
-       <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  -->
+  <!-- =========================================================================
+       Cloudflare Turnstile Bot Protection (Hook Point - Optional)
+       To activate Turnstile:
+       1. In Cloudflare Dashboard: Go to Turnstile -> Add Widget.
+       2. Uncomment the <script> below and insert your sitekey into data-sitekey.
+       3. Pass the resulting cf-turnstile-response token in POST /api/explain.
+       ========================================================================= -->
+  <!-- <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script> -->
 </head>
 <body>
   <!-- Ambient Sacred Background -->
@@ -132,6 +136,9 @@
             </svg>
           </button>
         </div>
+        <!-- Turnstile Widget Hook Point (Uncomment when sitekey is configured):
+        <div id="cf-turnstile-container" class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITEKEY" style="margin-top: 12px; display: flex; justify-content: center;"></div>
+        -->
       </form>
 
       <!-- Suggested Example Chips -->

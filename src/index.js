@@ -319,6 +319,27 @@ async function handleExplain(request, env, corsHeaders) {
     );
   }
 
+  // Cloudflare Turnstile Verification Hook Point (Optional bot protection):
+  // When active, pass turnstileToken in the POST body and set TURNSTILE_SECRET_KEY in Wrangler secrets:
+  /*
+  if (env?.TURNSTILE_SECRET_KEY && body?.turnstileToken) {
+    const ip = request.headers.get("CF-Connecting-IP") || "";
+    const formData = new URLSearchParams();
+    formData.append("secret", env.TURNSTILE_SECRET_KEY);
+    formData.append("response", body.turnstileToken);
+    if (ip) formData.append("remoteip", ip);
+
+    const tsRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: formData
+    });
+    const tsOutcome = await tsRes.json();
+    if (!tsOutcome.success) {
+      return jsonResponse({ error: "Turnstile verification failed." }, 403, {}, corsHeaders);
+    }
+  }
+  */
+
   const normalized = normalizeQuery(q);
   // If context is present, include in cache key so contextual follow-ups cache accurately
   const cacheKey = context && typeof context === "string" && context.trim().length > 0
