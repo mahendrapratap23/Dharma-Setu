@@ -40,12 +40,43 @@ const mockKV = {
   }
 };
 
+const mimeTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".ico": "image/x-icon"
+};
+
+const mockAssets = {
+  async fetch(request) {
+    const parsed = new URL(request.url);
+    let filePath = path.join(process.cwd(), "public", parsed.pathname === "/" ? "index.html" : parsed.pathname.replace(/^\//, ""));
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(process.cwd(), "public", "index.html");
+    }
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = mimeTypes[ext] || "text/plain";
+      const data = fs.readFileSync(filePath);
+      return new Response(data, {
+        status: 200,
+        headers: { "Content-Type": contentType }
+      });
+    }
+    return new Response("Not Found", { status: 404 });
+  }
+};
+
 const PORT = process.env.PORT || 8787;
 const env = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || devVars.GEMINI_API_KEY,
   GEMINI_MODEL: process.env.GEMINI_MODEL || devVars.GEMINI_MODEL || "gemini-2.5-flash",
   ALLOWED_ORIGIN: "*",
-  CACHE: mockKV
+  CACHE: mockKV,
+  ASSETS: mockAssets
 };
 
 const server = http.createServer(async (req, res) => {
