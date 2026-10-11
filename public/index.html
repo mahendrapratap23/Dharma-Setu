@@ -44,12 +44,28 @@
   <!-- <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script> -->
 </head>
 <body>
-  <!-- Ambient Sacred Background -->
-  <div class="ambient-bg" aria-hidden="true">
-    <div class="mandala-watermark"></div>
-    <div class="dust-particle p1"></div>
-    <div class="dust-particle p2"></div>
-    <div class="dust-particle p3"></div>
+  <!-- Ambient Interactive Canvas & Aarti Glow Background -->
+  <canvas id="ambient-canvas" class="ambient-canvas" aria-hidden="true"></canvas>
+  <div class="aarti-glow" id="aarti-glow" aria-hidden="true"></div>
+  <div class="mandala-parallax-wrap" id="mandala-parallax-wrap" aria-hidden="true">
+    <svg class="mandala-sacred-svg" id="mandala-sacred-svg" viewBox="0 0 600 600" width="600" height="600">
+      <circle cx="300" cy="300" r="280" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.3"/>
+      <circle cx="300" cy="300" r="240" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
+      <circle cx="300" cy="300" r="190" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="300" cy="300" r="140" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
+      <circle cx="300" cy="300" r="85" fill="none" stroke="currentColor" stroke-width="2" opacity="0.6"/>
+      <!-- Sacred 12 Petals -->
+      <g opacity="0.35">
+        <path d="M300 20 C320 120 320 180 300 215 C280 180 280 120 300 20 Z" fill="currentColor"/>
+        <path d="M300 385 C320 420 320 480 300 580 C280 480 280 420 300 385 Z" fill="currentColor"/>
+        <path d="M20 300 C120 320 180 320 215 300 C180 280 120 280 20 300 Z" fill="currentColor"/>
+        <path d="M385 300 C420 320 480 320 580 300 C480 280 420 280 385 300 Z" fill="currentColor"/>
+        <path d="M102 102 C172 172 215 215 240 240 C215 215 172 172 102 102 Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M498 102 C428 172 385 215 360 240 C385 215 428 172 498 102 Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M102 498 C172 428 215 385 240 360 C215 385 172 428 102 498 Z" stroke="currentColor" stroke-width="2"/>
+        <path d="M498 498 C428 428 385 385 360 360 C385 385 428 428 498 498 Z" stroke="currentColor" stroke-width="2"/>
+      </g>
+    </svg>
   </div>
 
   <!-- Header -->
@@ -72,13 +88,13 @@
       <div class="header-actions">
         <!-- Language Switcher -->
         <div class="lang-switch-group" role="group" aria-label="Language selection">
-          <button type="button" class="lang-btn active" data-lang="hinglish" id="lang-hinglish" aria-pressed="true">Hinglish</button>
-          <button type="button" class="lang-btn" data-lang="hi" id="lang-hi" aria-pressed="false">हिंदी</button>
-          <button type="button" class="lang-btn" data-lang="en" id="lang-en" aria-pressed="false">English</button>
+          <button type="button" class="lang-btn active ripple-effect" data-lang="hinglish" id="lang-hinglish" aria-pressed="true">Hinglish</button>
+          <button type="button" class="lang-btn ripple-effect" data-lang="hi" id="lang-hi" aria-pressed="false">हिंदी</button>
+          <button type="button" class="lang-btn ripple-effect" data-lang="en" id="lang-en" aria-pressed="false">English</button>
         </div>
 
         <!-- Theme Toggle -->
-        <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle color theme" title="Toggle theme">
+        <button type="button" class="theme-toggle-btn ripple-effect" id="theme-toggle-btn" aria-label="Toggle color theme" title="Toggle theme">
           <svg class="theme-icon icon-sun" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
             <circle cx="12" cy="12" r="5"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -104,8 +120,11 @@
     <!-- 1. HOME SECTION -->
     <section class="view-section home-section" id="home-view">
       <div class="home-hero">
-        <div class="mandala-badge" aria-hidden="true">🕉️</div>
-        <h1 class="home-headline" id="ui-home-heading">Sanatana Gyan, Shastra Pramaan</h1>
+        <div class="mandala-badge floating-badge" aria-hidden="true">
+          <span class="om-symbol">🕉️</span>
+          <div class="badge-halo"></div>
+        </div>
+        <h1 class="home-headline animated-gradient-headline" id="ui-home-heading">Sanatana Gyan, Shastra Pramaan</h1>
         <p class="home-subheading" id="ui-home-desc">Granthon ke aadhar par pramanik uttar, kathaayein aur sambandh.</p>
       </div>
 
@@ -128,7 +147,19 @@
             required
           />
           <button type="button" class="clear-input-btn" id="home-clear-btn" aria-label="Clear search" hidden>✕</button>
-          <button type="submit" class="search-submit-btn" id="home-submit-btn" aria-label="Submit Search">
+          
+          <!-- Mic Button (Phase B visual + Phase C hook) -->
+          <button type="button" class="mic-btn ripple-effect" id="home-mic-btn" aria-label="Search by voice" title="Voice Search">
+            <svg class="mic-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            <span class="mic-pulse"></span>
+          </button>
+
+          <button type="submit" class="search-submit-btn ripple-effect" id="home-submit-btn" aria-label="Submit Search">
             <span class="btn-text" id="ui-search-btn-text">Khojein</span>
             <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -353,7 +384,16 @@
         placeholder="Naya sawal poochhein..."
         aria-label="Ask new question"
       />
-      <button type="submit" class="sticky-search-btn" aria-label="Search">
+      <button type="button" class="sticky-mic-btn ripple-effect" id="sticky-mic-btn" aria-label="Search by voice" title="Voice Search">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        <span class="mic-pulse"></span>
+      </button>
+      <button type="submit" class="sticky-search-btn ripple-effect" aria-label="Search">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
           <line x1="5" y1="12" x2="19" y2="12"></line>
           <polyline points="12 5 19 12 12 19"></polyline>

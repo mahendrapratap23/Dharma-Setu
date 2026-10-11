@@ -365,6 +365,14 @@ function showView(viewName) {
   DOM.resultView.hidden = viewName !== "result";
   DOM.stickyBottomBar.hidden = viewName !== "result";
 
+  document.body.setAttribute("data-view", viewName);
+
+  if (viewName !== "result") {
+    document.body.removeAttribute("data-topic-type");
+  } else if (STATE.currentData && STATE.currentData.type) {
+    document.body.setAttribute("data-topic-type", STATE.currentData.type);
+  }
+
   if (viewName === "home") {
     DOM.homeSearchInput.value = "";
     DOM.homeClearBtn.hidden = true;
@@ -505,6 +513,7 @@ function renderResult(data) {
   DOM.resTitle.textContent = data.title || STATE.currentQuery;
   DOM.resTypeBadge.textContent = data.type || "concept";
   DOM.resTypeBadge.setAttribute("data-type", data.type || "concept");
+  document.body.setAttribute("data-topic-type", data.type || "concept");
   DOM.resSummary.textContent = data.summary || "";
 
   // Confidence check
@@ -933,6 +942,281 @@ function initEventListeners() {
 }
 
 // ---------------------------------------------------------------------------
+// Ambient Particle Canvas Engine (Aarti Embers & Constellation Web)
+// ---------------------------------------------------------------------------
+const CanvasEngine = {
+  canvas: null,
+  ctx: null,
+  particles: [],
+  maxParticles: 42,
+  width: 0,
+  height: 0,
+  dpr: 1,
+  rafId: null,
+  mouse: { x: -1000, y: -1000, active: false },
+  reducedMotion: false,
+
+  init() {
+    this.canvas = document.getElementById("ambient-canvas");
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext("2d");
+    if (!this.ctx) return;
+
+    this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.resize();
+    this.createParticles();
+    this.bindEvents();
+
+    if (!this.reducedMotion) {
+      this.start();
+    } else {
+      this.drawStatic();
+    }
+  },
+
+  resize() {
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.width = window.innerWidth;
+    this.height = window.innerHeight;
+    this.canvas.width = this.width * this.dpr;
+    this.canvas.height = this.height * this.dpr;
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.scale(this.dpr, this.dpr);
+  },
+
+  createParticles() {
+    this.particles = [];
+    const count = this.width < 600 ? 28 : this.maxParticles;
+    for (let i = 0; i < count; i++) {
+      this.particles.push({
+        x: Math.random() * this.width,
+        y: Math.random() * this.height,
+        radius: Math.random() * 2.2 + 0.8,
+        vy: -(Math.random() * 0.45 + 0.22),
+        baseVx: (Math.random() - 0.5) * 0.25,
+        alpha: Math.random() * 0.45 + 0.2,
+        baseAlpha: Math.random() * 0.45 + 0.2,
+        phase: Math.random() * Math.PI * 2,
+        pulseSpeed: Math.random() * 0.02 + 0.01,
+        hue: Math.floor(Math.random() * 15 + 35) // warm gold / amber (35 - 50)
+      });
+    }
+  },
+
+  bindEvents() {
+    window.addEventListener("resize", () => {
+      this.resize();
+      this.createParticles();
+    }, { passive: true });
+
+    window.addEventListener("pointermove", (e) => {
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
+      this.mouse.active = true;
+    }, { passive: true });
+
+    window.addEventListener("pointerleave", () => {
+      this.mouse.active = false;
+      this.mouse.x = -1000;
+      this.mouse.y = -1000;
+    }, { passive: true });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        this.stop();
+      } else if (!this.reducedMotion) {
+        this.start();
+      }
+    });
+
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    mql.addEventListener("change", (e) => {
+      this.reducedMotion = e.matches;
+      if (this.reducedMotion) {
+        this.stop();
+        this.drawStatic();
+      } else {
+        this.start();
+      }
+    });
+  },
+
+  start() {
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+    const loop = () => {
+      this.updateAndDraw();
+      this.rafId = requestAnimationFrame(loop);
+    };
+    this.rafId = requestAnimationFrame(loop);
+  },
+
+  stop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  },
+
+  drawStatic() {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    for (const p of this.particles) {
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      this.ctx.fillStyle = `hsla(${p.hue}, 95%, 65%, ${p.alpha * 0.35})`;
+      this.ctx.fill();
+    }
+  },
+
+  updateAndDraw() {
+    this.ctx.clearRect(0, 0, this.width, this.height);
+
+    const isResult = !DOM.resultView.hidden;
+
+    // Constellation lines connecting nearby embers on result view
+    if (isResult) {
+      const maxDist = 72;
+      const pLen = this.particles.length;
+      this.ctx.lineWidth = 0.6;
+      for (let i = 0; i < pLen; i++) {
+        for (let j = i + 1; j < pLen; j++) {
+          const dx = this.particles[i].x - this.particles[j].x;
+          const dy = this.particles[i].y - this.particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            const lineAlpha = (1 - dist / maxDist) * 0.15;
+            this.ctx.strokeStyle = `rgba(232, 184, 75, ${lineAlpha})`;
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
+            this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
+            this.ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // Update and draw embers
+    for (const p of this.particles) {
+      p.phase += p.pulseSpeed;
+      p.x += p.baseVx + Math.sin(p.phase) * 0.35;
+      p.y += p.vy;
+
+      // Mouse attraction
+      if (this.mouse.active) {
+        const mdx = this.mouse.x - p.x;
+        const mdy = this.mouse.y - p.y;
+        const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+        if (mDist < 120 && mDist > 4) {
+          p.x += (mdx / mDist) * 0.55;
+          p.y += (mdy / mDist) * 0.55;
+        }
+      }
+
+      // Recycle when rising off the screen
+      if (p.y < -12) {
+        p.y = this.height + 12;
+        p.x = Math.random() * this.width;
+      }
+      if (p.x < -12) p.x = this.width + 12;
+      if (p.x > this.width + 12) p.x = -12;
+
+      // Dynamic glowing aarti ember
+      const currentAlpha = p.baseAlpha + Math.sin(p.phase) * 0.15;
+      const clampedAlpha = Math.max(0.08, Math.min(0.7, currentAlpha));
+
+      const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 2.6);
+      grad.addColorStop(0, `hsla(${p.hue}, 100%, 75%, ${clampedAlpha})`);
+      grad.addColorStop(1, `hsla(${p.hue}, 90%, 55%, 0)`);
+
+      this.ctx.fillStyle = grad;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius * 2.6, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Core particle
+      this.ctx.fillStyle = `hsla(${p.hue}, 100%, 88%, ${Math.min(1, clampedAlpha + 0.25)})`;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.radius * 0.85, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Mandala Parallax & Tilt Effect
+// ---------------------------------------------------------------------------
+const MandalaParallax = {
+  wrap: null,
+  targetX: 0,
+  targetY: 0,
+  currentX: 0,
+  currentY: 0,
+  rafId: null,
+
+  init() {
+    this.wrap = document.getElementById("mandala-parallax-wrap");
+    if (!this.wrap) return;
+
+    // Desktop pointer movement
+    window.addEventListener("pointermove", (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      this.targetX = ((e.clientX - cx) / cx) * 20; // +/- 20px
+      this.targetY = ((e.clientY - cy) / cy) * 14; // +/- 14px
+    }, { passive: true });
+
+    // Mobile gyroscope / device orientation tilt
+    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== "function") {
+      window.addEventListener("deviceorientation", (e) => {
+        if (e.gamma !== null && e.beta !== null) {
+          this.targetX = Math.max(-24, Math.min(24, e.gamma * 0.6));
+          this.targetY = Math.max(-18, Math.min(18, (e.beta - 45) * 0.5));
+        }
+      }, { passive: true });
+    }
+
+    this.animate();
+  },
+
+  animate() {
+    this.currentX += (this.targetX - this.currentX) * 0.08;
+    this.currentY += (this.targetY - this.currentY) * 0.08;
+
+    if (this.wrap) {
+      this.wrap.style.transform = `translateX(calc(-50% + ${this.currentX.toFixed(2)}px)) translateY(${this.currentY.toFixed(2)}px)`;
+    }
+
+    this.rafId = requestAnimationFrame(() => this.animate());
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Tap / Click Tactile Ripple Effect
+// ---------------------------------------------------------------------------
+function initRippleEffect() {
+  document.addEventListener("pointerdown", (e) => {
+    const btn = e.target.closest(".ripple-effect");
+    if (!btn) return;
+
+    const rect = btn.getBoundingClientRect();
+    const circle = document.createElement("span");
+    const diameter = Math.max(rect.width, rect.height);
+    const radius = diameter / 2;
+
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - rect.left - radius}px`;
+    circle.style.top = `${e.clientY - rect.top - radius}px`;
+    circle.classList.add("ripple-circle");
+
+    const existing = btn.querySelector(".ripple-circle");
+    if (existing) existing.remove();
+
+    btn.appendChild(circle);
+    setTimeout(() => circle.remove(), 620);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // App Bootstrapping
 // ---------------------------------------------------------------------------
 function initApp() {
@@ -940,6 +1224,9 @@ function initApp() {
   applyLanguage(STATE.lang);
   renderRecentSearches();
   initEventListeners();
+  initRippleEffect();
+  CanvasEngine.init();
+  MandalaParallax.init();
 
   // Check URL on initial load for shareable link (?q=Ram&lang=hinglish)
   const urlParams = new URLSearchParams(window.location.search);
