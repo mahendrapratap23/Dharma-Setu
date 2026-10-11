@@ -29,6 +29,8 @@ const I18N = {
     footerDisclaimer: "Jawab AI se bante hain, granthon se verify karein.",
     feedbackLink: "Galti batao",
     backText: "Peeche:",
+    interpretedLabel: "Maine samjha:",
+    didYouMeanLabel: "Shayad aapka matlab tha:",
     retryBtn: "Phir se try karein",
     errorTitle: "Kripya kshama karein",
     errorMsg: "Jawab laane mein thodi der ho rahi hai. Kripya punah prayas karein.",
@@ -65,6 +67,8 @@ const I18N = {
     footerDisclaimer: "उत्तर AI द्वारा जनरेटेड हैं, ग्रंथों से पुष्टि करें।",
     feedbackLink: "त्रुटि बताएं",
     backText: "पिछला विषय:",
+    interpretedLabel: "मैंने समझा:",
+    didYouMeanLabel: "क्या आपका तात्पर्य था:",
     retryBtn: "पुनः प्रयास करें",
     errorTitle: "कृपया क्षमा करें",
     errorMsg: "उत्तर प्राप्त करने में समय लग रहा है। कृपया पुनः प्रयास करें।",
@@ -101,6 +105,8 @@ const I18N = {
     footerDisclaimer: "Answers are AI-generated, verify with authentic scriptures.",
     feedbackLink: "Report an issue",
     backText: "Back to:",
+    interpretedLabel: "Interpreted as:",
+    didYouMeanLabel: "Did you mean:",
     retryBtn: "Retry",
     errorTitle: "We apologize",
     errorMsg: "The server is currently busy or taking longer than expected. Please try again.",
@@ -168,6 +174,11 @@ const DOM = {
   breadcrumbBackText: document.getElementById("breadcrumb-back-text"),
   breadcrumbPrevTopic: document.getElementById("breadcrumb-prev-topic"),
   
+  resInterpretedBox: document.getElementById("res-interpreted-box"),
+  resInterpretedAs: document.getElementById("res-interpreted-as"),
+  resDidYouMeanBox: document.getElementById("res-did-you-mean-box"),
+  resDidYouMeanChips: document.getElementById("res-did-you-mean-chips"),
+
   resTitle: document.getElementById("res-title"),
   resTypeBadge: document.getElementById("res-type-badge"),
   resSummary: document.getElementById("res-summary"),
@@ -232,7 +243,9 @@ const DOM = {
   uiRetryBtnText: document.getElementById("ui-retry-btn-text"),
   uiSheetRelLabel: document.getElementById("ui-sheet-rel-label"),
   uiSheetSourceLabel: document.getElementById("ui-sheet-source-label"),
-  uiSheetExploreText: document.getElementById("ui-sheet-explore-text")
+  uiSheetExploreText: document.getElementById("ui-sheet-explore-text"),
+  uiInterpretedLabel: document.getElementById("ui-interpreted-label"),
+  uiDidYouMeanLabel: document.getElementById("ui-did-you-mean-label")
 };
 
 // ---------------------------------------------------------------------------
@@ -283,6 +296,8 @@ function applyLanguage(lang) {
   DOM.uiSheetRelLabel.textContent = t.sheetRel;
   DOM.uiSheetSourceLabel.textContent = t.sheetSource;
   DOM.uiSheetExploreText.textContent = t.sheetExplore;
+  if (DOM.uiInterpretedLabel) DOM.uiInterpretedLabel.textContent = t.interpretedLabel;
+  if (DOM.uiDidYouMeanLabel) DOM.uiDidYouMeanLabel.textContent = t.didYouMeanLabel;
   DOM.breadcrumbBackText.textContent = t.backText;
   DOM.errorTitle.textContent = t.errorTitle;
   DOM.errorMessage.textContent = t.errorMsg;
@@ -461,6 +476,29 @@ function renderResult(data) {
     DOM.breadcrumbBar.hidden = false;
   } else {
     DOM.breadcrumbBar.hidden = true;
+  }
+
+  // Interpreted As & Did You Mean
+  if (data.interpreted_as) {
+    DOM.resInterpretedAs.textContent = data.interpreted_as;
+    DOM.resInterpretedBox.hidden = false;
+  } else {
+    DOM.resInterpretedBox.hidden = true;
+  }
+
+  if (data.did_you_mean && Array.isArray(data.did_you_mean) && data.did_you_mean.length > 0) {
+    DOM.resDidYouMeanChips.innerHTML = "";
+    data.did_you_mean.forEach(item => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "did-you-mean-chip";
+      chip.textContent = item;
+      chip.addEventListener("click", () => fetchExplanation(item));
+      DOM.resDidYouMeanChips.appendChild(chip);
+    });
+    DOM.resDidYouMeanBox.hidden = false;
+  } else {
+    DOM.resDidYouMeanBox.hidden = true;
   }
 
   // 1. Hero Card

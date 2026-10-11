@@ -4,17 +4,32 @@
  */
 
 export const SYSTEM_PROMPT = `You are Dharma Setu, a guide to Hindu Dharma. Reply ONLY with JSON matching the schema.
-1) Reply in the user's chosen language: hinglish = Hindi written in Roman script, hi = Devanagari Hindi, en = English. Use simple short sentences.
-2) Every claim needs a source (text + kand/parva/adhyaya). If unsure, say so and set confidence to low. Never invent verses or sources.
-3) Keep Valmiki Ramayana, Ramcharitmanas, Puranas and folk tradition clearly separate. Where traditions differ, say 'in some traditions...' and never call a tradition wrong.
-4) Only include connections found in scriptures or well-known tradition.
-5) If the question is unrelated to Hindu Dharma, or hateful/political, politely decline in the same JSON format with confidence low.
-6) Be respectful and neutral.`;
+
+First interpret the user's query. Users misspell, abbreviate, or transliterate names (e.g. drapati/draupadi/droupadi/panchali = Draupadi). Resolve to the most likely canonical topic and answer it directly. Never refuse spelling or transliteration mistakes. Only decline truly unrelated or hateful/political queries.
+
+1) Reply in the user's chosen language:
+   - hinglish: Hindi written in Roman script (conversational, simple sentences).
+   - hi: Devanagari Hindi (pure, respectful, simple sentences).
+   - en: English (simple, respectful).
+2) "interpreted_as": The canonical topic name or resolved question title (e.g., "Draupadi").
+3) "did_you_mean": Up to 3 alternative spellings, titles, or related topics (e.g., ["Draupadi", "Panchali", "Yajnaseni"]).
+4) "speech_text": A clean, natural narration of the answer (max ~120 words). Write speech_text in Devanagari script when lang is 'hinglish' or 'hi' (for accurate voice pronunciation), and in English when lang is 'en'.
+5) Every claim needs a scripture source (text + kand/parva/adhyaya). If unsure, say so and set confidence to low. Never invent verses or sources.
+6) Keep Valmiki Ramayana, Ramcharitmanas, Puranas and folk tradition clearly separate. Where traditions differ, say 'in some traditions...' and never call a tradition wrong.
+7) Only include connections found in scriptures or well-known tradition.
+8) If the question is truly unrelated to Hindu Dharma, or hateful/political, politely decline in the same JSON format with confidence low.
+9) Be respectful and neutral.`;
 
 export const GEMINI_SCHEMA = {
   type: "OBJECT",
   properties: {
     title: { type: "STRING" },
+    interpreted_as: { type: "STRING" },
+    did_you_mean: {
+      type: "ARRAY",
+      items: { type: "STRING" }
+    },
+    speech_text: { type: "STRING" },
     type: {
       type: "STRING",
       enum: ["person", "scripture", "event", "tradition", "place", "concept"]
@@ -64,6 +79,9 @@ export const GEMINI_SCHEMA = {
   },
   required: [
     "title",
+    "interpreted_as",
+    "did_you_mean",
+    "speech_text",
     "type",
     "summary",
     "sources",
@@ -87,6 +105,27 @@ export function normalizeQuery(q) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+/**
+ * Strips markdown code fences and safely parses JSON.
+ */
+export function extractAndParseJson(rawText) {
+  if (!rawText || typeof rawText !== "string") {
+    throw new Error("Empty candidate text from Gemini");
+  }
+  let cleaned = rawText.trim();
+  // Strip Markdown code fences if present (```json ... ``` or ``` ... ```)
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+  }
+  // Locate outermost JSON braces
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  return JSON.parse(cleaned);
 }
 
 /**
@@ -152,14 +191,13 @@ async function checkRateLimit(request, env) {
     await env.CACHE.put(rateLimitKey, String(count + 1), { expirationTtl: 120 });
     return true;
   } catch (err) {
-    // In case of KV read error, log and allow request through
     console.error("Rate limit check error:", err);
     return true;
   }
 }
 
 /**
- * Calls Gemini REST API with retry on 429/5xx.
+ * Calls Gemini REST API with retry on 429/5xx and JSON parse retry.
  */
 async function callGeminiApi({ q, lang, context }, env) {
   const apiKey = env?.GEMINI_API_KEY;
@@ -170,35 +208,41 @@ async function callGeminiApi({ q, lang, context }, env) {
   const model = env?.GEMINI_MODEL || "gemini-3.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
-  let promptText = `User Question: "${q}"\nSelected Language: "${lang}"`;
-  if (context && typeof context === "string" && context.trim().length > 0) {
-    promptText += `\nContext/Previous Topic: "${context.trim().slice(0, 200)}"`;
-  }
-
-  const payload = {
-    systemInstruction: {
-      parts: [{ text: SYSTEM_PROMPT }]
-    },
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: promptText }]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 1500,
-      responseMimeType: "application/json",
-      responseSchema: GEMINI_SCHEMA
+  const buildPayload = (extraReminder = false) => {
+    let promptText = `User Question: "${q}"\nSelected Language: "${lang}"`;
+    if (context && typeof context === "string" && context.trim().length > 0) {
+      promptText += `\nContext/Previous Topic: "${context.trim().slice(0, 200)}"`;
     }
+    if (extraReminder) {
+      promptText += `\nCRITICAL: Output MUST be strictly valid JSON adhering to the schema. No markdown code blocks, no trailing comments.`;
+    }
+
+    return {
+      systemInstruction: {
+        parts: [{ text: SYSTEM_PROMPT }]
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: promptText }]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 4096, // High token limit to prevent thinking token exhaustion
+        responseMimeType: "application/json",
+        responseSchema: GEMINI_SCHEMA
+      }
+    };
   };
 
-  const executeCall = async () => {
+  const executeCall = async (payload, targetModel = model) => {
+    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 14000); // 14s timeout
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(targetUrl, {
         method: "POST",
         headers: {
           "x-goog-api-key": apiKey,
@@ -218,37 +262,43 @@ async function callGeminiApi({ q, lang, context }, env) {
 
   let response;
   try {
-    response = await executeCall();
+    response = await executeCall(buildPayload(false));
   } catch (err) {
-    // First attempt failed (timeout or network error) -> retry once with backoff
-    console.warn("First Gemini attempt failed, retrying in 800ms...", err);
+    console.warn("First Gemini attempt failed (network/timeout), retrying in 800ms...", err);
     await new Promise((resolve) => setTimeout(resolve, 800));
     try {
-      response = await executeCall();
+      response = await executeCall(buildPayload(false));
     } catch (retryErr) {
-      console.error("Gemini call failed after retry:", retryErr);
+      console.error("Gemini call failed after network retry:", retryErr);
       throw { status: 502, error: "busy" };
     }
   }
 
-  // Handle upstream HTTP response status
+  // Handle upstream HTTP response status with automatic fallback model
+  const fallbackModel = model === "gemini-3.5-flash" ? "gemini-3.5-flash-lite" : "gemini-3.5-flash";
+
   if (!response.ok) {
     const upstreamStatus = response.status;
+    const errorBody = await response.text().catch(() => "");
+    // Log upstream status and body to console (visible via wrangler tail) but never leak to user
+    console.error(`Upstream Gemini error (${model}): HTTP ${upstreamStatus} - Response: ${errorBody}`);
+
     if (upstreamStatus === 429 || upstreamStatus >= 500) {
-      console.warn(`Upstream returned ${upstreamStatus}, retrying once in 800ms...`);
+      console.warn(`Upstream returned ${upstreamStatus}, attempting resilient fallback model ${fallbackModel}...`);
       await new Promise((resolve) => setTimeout(resolve, 800));
       try {
-        const retryResponse = await executeCall();
+        const retryResponse = await executeCall(buildPayload(false), fallbackModel);
         if (retryResponse.ok) {
           response = retryResponse;
         } else {
+          const retryErrorBody = await retryResponse.text().catch(() => "");
+          console.error(`Fallback model (${fallbackModel}) returned HTTP ${retryResponse.status} - Response: ${retryErrorBody}`);
           throw { status: retryResponse.status === 429 ? 429 : 502, error: "busy" };
         }
       } catch (e) {
         throw { status: upstreamStatus === 429 ? 429 : 502, error: "busy" };
       }
     } else {
-      console.error(`Upstream Gemini error: HTTP ${upstreamStatus}`);
       throw { status: 502, error: "busy" };
     }
   }
@@ -257,15 +307,27 @@ async function callGeminiApi({ q, lang, context }, env) {
   const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!rawText) {
-    console.error("Empty or invalid candidate in Gemini response");
+    console.error("Empty candidate in Gemini response:", JSON.stringify(result));
     throw { status: 502, error: "busy" };
   }
 
+  // Robust JSON parse attempt
   try {
-    return JSON.parse(rawText);
+    return extractAndParseJson(rawText);
   } catch (parseErr) {
-    console.error("Failed to parse Gemini response as JSON:", rawText);
-    throw { status: 502, error: "busy" };
+    console.warn("Initial JSON parse failed. Retrying with 'valid JSON only' reminder...", parseErr);
+    try {
+      const secondCall = await executeCall(buildPayload(true));
+      if (!secondCall.ok) {
+        throw new Error(`Second attempt failed with status ${secondCall.status}`);
+      }
+      const secondResult = await secondCall.json();
+      const secondRawText = secondResult?.candidates?.[0]?.content?.parts?.[0]?.text;
+      return extractAndParseJson(secondRawText);
+    } catch (retryParseErr) {
+      console.error("Failed to parse Gemini response as JSON after retry:", retryParseErr, rawText);
+      throw { status: 502, error: "busy" };
+    }
   }
 }
 
@@ -320,7 +382,6 @@ async function handleExplain(request, env, corsHeaders) {
   }
 
   // Cloudflare Turnstile Verification Hook Point (Optional bot protection):
-  // When active, pass turnstileToken in the POST body and set TURNSTILE_SECRET_KEY in Wrangler secrets:
   /*
   if (env?.TURNSTILE_SECRET_KEY && body?.turnstileToken) {
     const ip = request.headers.get("CF-Connecting-IP") || "";
@@ -352,12 +413,15 @@ async function handleExplain(request, env, corsHeaders) {
       const cached = await env.CACHE.get(cacheKey);
       if (cached) {
         const cachedJson = JSON.parse(cached);
-        return jsonResponse(
-          cachedJson,
-          200,
-          { "X-Dharma-Cache": "HIT" },
-          corsHeaders
-        );
+        // Ensure cached item is not low confidence or malformed
+        if (cachedJson && cachedJson.title && cachedJson.confidence !== "low") {
+          return jsonResponse(
+            cachedJson,
+            200,
+            { "X-Dharma-Cache": "HIT" },
+            corsHeaders
+          );
+        }
       }
     } catch (cacheErr) {
       console.warn("KV Cache read error:", cacheErr);
@@ -368,8 +432,10 @@ async function handleExplain(request, env, corsHeaders) {
   try {
     const data = await callGeminiApi({ q: q.trim(), lang, context }, env);
 
-    // Save to KV cache if CACHE is available
-    if (env?.CACHE) {
+    // Rule: Never cache error, empty or confidence:"low" results!
+    const shouldCache = data && data.title && data.confidence !== "low";
+
+    if (env?.CACHE && shouldCache) {
       try {
         await env.CACHE.put(cacheKey, JSON.stringify(data), {
           expirationTtl: CACHE_TTL_SECONDS
@@ -387,12 +453,22 @@ async function handleExplain(request, env, corsHeaders) {
     );
   } catch (err) {
     if (err && err.error === "busy") {
-      return jsonResponse({ error: "busy" }, err.status || 502, {}, corsHeaders);
+      return jsonResponse(
+        { error: "busy", message: "Server is currently experiencing high load. Please try again shortly." },
+        err.status || 502,
+        {},
+        corsHeaders
+      );
     }
     if (err && err.status === 500) {
       return jsonResponse({ error: "Server configuration error" }, 500, {}, corsHeaders);
     }
-    return jsonResponse({ error: "busy" }, 502, {}, corsHeaders);
+    return jsonResponse(
+      { error: "busy", message: "Server is temporarily unavailable. Please try again." },
+      502,
+      {},
+      corsHeaders
+    );
   }
 }
 

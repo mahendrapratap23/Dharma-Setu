@@ -129,32 +129,57 @@ async function runTests() {
   assert.strictEqual(rateExceededRes.status, 429);
   console.log("   ✅ Rate limit correctly blocks after 20 req/min with HTTP 429.");
 
-  // Test 8: Live Gemini API check if GEMINI_API_KEY is provided in environment
-  if (process.env.GEMINI_API_KEY) {
-    console.log("8. Testing LIVE Gemini API call with GEMINI_API_KEY...");
+  // Test 8: extractAndParseJson tests
+  console.log("8. Testing robust JSON parser (extractAndParseJson)...");
+  const { extractAndParseJson } = await import("../src/index.js");
+  const fenced = "```json\n{\"title\": \"Draupadi\", \"interpreted_as\": \"Draupadi\"}\n```";
+  const parsedFenced = extractAndParseJson(fenced);
+  assert.strictEqual(parsedFenced.title, "Draupadi");
+  assert.strictEqual(parsedFenced.interpreted_as, "Draupadi");
+
+  const noisy = "Here is the response: {\"title\": \"Sita\", \"confidence\": \"high\"} hope it helps!";
+  const parsedNoisy = extractAndParseJson(noisy);
+  assert.strictEqual(parsedNoisy.title, "Sita");
+  console.log("   ✅ extractAndParseJson handles fences and trailing text correctly.");
+
+  // Test 9: Live Gemini API check if GEMINI_API_KEY is available
+  let testApiKey = process.env.GEMINI_API_KEY;
+  if (!testApiKey) {
+    const fs = await import("node:fs");
+    if (fs.existsSync(".dev.vars")) {
+      const devContent = fs.readFileSync(".dev.vars", "utf8");
+      const match = devContent.match(/GEMINI_API_KEY\s*=\s*["']?([^"'\r\n]+)/);
+      if (match) testApiKey = match[1];
+    }
+  }
+
+  if (testApiKey) {
+    console.log("9. Testing LIVE Gemini API call with misspelling 'drapati'...");
     const liveReq = new Request("http://localhost/api/explain", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ q: "Hanuman", lang: "hinglish" })
+      body: JSON.stringify({ q: "drapati", lang: "hinglish" })
     });
     const liveRes = await worker.fetch(liveReq, {
-      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-      GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      GEMINI_API_KEY: testApiKey,
+      GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-3.5-flash",
       CACHE: new MockKV()
     });
     assert.strictEqual(liveRes.status, 200);
     const liveData = await liveRes.json();
-    console.log("   Live Result Title:", liveData.title);
-    console.log("   Live Result Type:", liveData.type);
-    console.log("   Live Result Sources:", liveData.sources);
+    console.log("   Interpreted As:", liveData.interpreted_as);
+    console.log("   Title:", liveData.title);
+    console.log("   Did You Mean:", liveData.did_you_mean);
+    console.log("   Speech Text:", liveData.speech_text ? liveData.speech_text.slice(0, 60) + "..." : "none");
+    assert.ok(liveData.interpreted_as);
     assert.ok(liveData.title);
-    assert.ok(liveData.sources);
-    console.log("   ✅ Live Gemini API test succeeded!");
+    assert.ok(liveData.speech_text);
+    console.log("   ✅ Live 'drapati' resolution succeeded!");
   } else {
-    console.log("8. Skipping live Gemini call (set GEMINI_API_KEY to test live).");
+    console.log("9. Skipping live Gemini call.");
   }
 
-  console.log("\n✨ All Phase 1 tests passed successfully!\n");
+  console.log("\n✨ All Phase A backend tests passed successfully!\n");
 }
 
 runTests().catch((err) => {

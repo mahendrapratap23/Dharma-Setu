@@ -755,6 +755,75 @@ body {
   border-top: 3px solid var(--accent-saffron);
 }
 
+/* Interpreted as & Did you mean banner */
+.interpreted-box {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(232, 184, 75, 0.08);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.interpreted-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.interpreted-icon {
+  font-size: 0.95rem;
+}
+
+.interpreted-label {
+  color: var(--text-muted);
+}
+
+.interpreted-query {
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.did-you-mean-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 0.82rem;
+}
+
+.did-you-mean-label {
+  color: var(--text-muted);
+}
+
+.did-you-mean-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.did-you-mean-chip {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-saffron);
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.did-you-mean-chip:hover {
+  border-color: var(--accent-saffron);
+  background: rgba(255, 153, 51, 0.15);
+}
+
 .hero-top-row {
   display: flex;
   justify-content: space-between;

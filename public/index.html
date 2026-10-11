@@ -222,6 +222,19 @@
         
         <!-- CARD 1: HERO -->
         <article class="result-card hero-card" id="card-hero">
+          <!-- Interpreted as & Did you mean -->
+          <div class="interpreted-box" id="res-interpreted-box" hidden>
+            <div class="interpreted-line">
+              <span class="interpreted-icon" aria-hidden="true">💡</span>
+              <span class="interpreted-label" id="ui-interpreted-label">Maine samjha:</span>
+              <strong class="interpreted-query" id="res-interpreted-as"></strong>
+            </div>
+            <div class="did-you-mean-line" id="res-did-you-mean-box" hidden>
+              <span class="did-you-mean-label" id="ui-did-you-mean-label">Shayad aapka matlab tha:</span>
+              <div class="did-you-mean-chips" id="res-did-you-mean-chips"></div>
+            </div>
+          </div>
+
           <div class="hero-top-row">
             <h2 class="hero-title" id="res-title"></h2>
             <span class="type-badge" id="res-type-badge"></span>
