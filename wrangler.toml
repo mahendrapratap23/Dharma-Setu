@@ -9,7 +9,7 @@ binding = "ASSETS"
 
 # Environment variables
 [vars]
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash"
 ALLOWED_ORIGIN = "*"
 
 # KV Cache namespace for storing responses (30-day TTL) and rate limiting

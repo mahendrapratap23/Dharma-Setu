@@ -167,7 +167,7 @@ async function callGeminiApi({ q, lang, context }, env) {
     throw { status: 500, message: "GEMINI_API_KEY is not configured on the server." };
   }
 
-  const model = env?.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = env?.GEMINI_MODEL || "gemini-3.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
   let promptText = `User Question: "${q}"\nSelected Language: "${lang}"`;
