@@ -1,0 +1,12 @@
+/* Dharma Setu Base Stylesheet - Phase 1 Placeholder */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0F1226;
+  color: #FFF8EC;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}

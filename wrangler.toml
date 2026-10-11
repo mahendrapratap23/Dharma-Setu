@@ -1,0 +1,20 @@
+name = "dharma-setu"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Static assets configuration (Workers Assets)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Environment variables
+[vars]
+GEMINI_MODEL = "gemini-2.5-flash"
+ALLOWED_ORIGIN = "*"
+
+# KV Cache namespace for storing responses (30-day TTL) and rate limiting
+# Run: wrangler kv namespace create CACHE
+# And replace the ID below with the returned id:
+[[kv_namespaces]]
+binding = "CACHE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
