@@ -179,7 +179,35 @@ async function runTests() {
     console.log("9. Skipping live Gemini call.");
   }
 
-  console.log("\n✨ All Phase A backend tests passed successfully!\n");
+  // Test 10: GET /api/wiki with fuzzy misspelling "drapati"
+  console.log("10. Testing GET /api/wiki route with 'drapati'...");
+  const wikiReq = new Request("http://localhost/api/wiki?q=drapati&lang=hi", {
+    method: "GET"
+  });
+  const mockCache = new MockKV();
+  const wikiRes = await worker.fetch(wikiReq, { CACHE: mockCache });
+  assert.strictEqual(wikiRes.status, 200);
+  const wikiData = await wikiRes.json();
+  console.log("   Wiki Title:", wikiData.title);
+  console.log("   Wiki Found:", wikiData.found);
+  console.log("   Wiki Image:", wikiData.imageUrl ? "Present" : "None");
+  console.log("   Wiki Extract snippet:", wikiData.extract ? wikiData.extract.slice(0, 60) + "..." : "None");
+  assert.strictEqual(wikiData.found, true);
+  assert.ok(wikiData.title.toLowerCase().includes("draupadi") || wikiData.title.includes("द्रौपदी"));
+  assert.ok(wikiData.extract);
+  console.log("   ✅ GET /api/wiki returned valid Wikipedia data!");
+
+  // Test 11: GET /api/wiki caching in KV
+  console.log("11. Testing KV caching for /api/wiki...");
+  const wikiReqCached = new Request("http://localhost/api/wiki?q=drapati&lang=hi", {
+    method: "GET"
+  });
+  const wikiResCached = await worker.fetch(wikiReqCached, { CACHE: mockCache });
+  assert.strictEqual(wikiResCached.status, 200);
+  assert.strictEqual(wikiResCached.headers.get("X-Dharma-Wiki-Cache"), "HIT");
+  console.log("   ✅ KV cache HIT verified on subsequent request!");
+
+  console.log("\n✨ All Hybrid Wikipedia + Gemini backend tests passed successfully!\n");
 }
 
 runTests().catch((err) => {

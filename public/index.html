@@ -251,8 +251,106 @@
       <!-- Result Stacked Cards -->
       <div class="result-cards-stack">
         
+        <!-- SKELETON: Wikipedia Card Loading -->
+        <div class="result-card wiki-card-skeleton" id="card-wiki-skeleton" hidden aria-hidden="true">
+          <div class="wiki-skeleton-header">
+            <div class="sk-line sk-wiki-badge"></div>
+          </div>
+          <div class="wiki-skeleton-body">
+            <div class="sk-box sk-wiki-thumb"></div>
+            <div class="sk-wiki-lines">
+              <div class="sk-line sk-title-sm"></div>
+              <div class="sk-line sk-text"></div>
+              <div class="sk-line sk-text short"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 0: WIKIPEDIA (HYBRID GROUNDING CARD) -->
+        <article class="result-card wiki-card" id="card-wiki" hidden>
+          <div class="wiki-card-header">
+            <div class="wiki-source-badge">
+              <svg class="wiki-w-logo" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M12.09 13.123l2.156-6.195h2.055l-3.342 9.072h-1.84L8.71 9.87l-2.41 6.13H4.46L1.12 7h2.054l2.156 6.123L7.74 7h1.94l2.41 6.123z"/>
+              </svg>
+              <span class="wiki-source-label" id="ui-wiki-source-label">Wikipedia ke anusaar</span>
+              <span class="wiki-lang-pill" id="wiki-lang-pill" hidden>HI</span>
+            </div>
+          </div>
+
+          <div class="wiki-card-content">
+            <!-- Media Section (Image or Mandala Placeholder) -->
+            <div class="wiki-media-wrap" id="wiki-media-wrap">
+              <div class="wiki-image-box" id="wiki-image-box" role="button" tabindex="0" aria-label="View larger image">
+                <img id="wiki-thumb-img" class="wiki-thumb-img" src="" alt="" loading="lazy" hidden />
+                <div class="wiki-mandala-placeholder" id="wiki-mandala-placeholder" hidden>
+                  <svg viewBox="0 0 100 100" class="mandala-svg" aria-hidden="true">
+                    <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.6"/>
+                    <circle cx="50" cy="50" r="34" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="3,3"/>
+                    <circle cx="50" cy="50" r="22" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.5"/>
+                    <path d="M50 6 L50 94 M6 50 L94 50 M19 19 L81 81 M19 81 L81 19" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                    <circle cx="50" cy="50" r="8" fill="currentColor" opacity="0.8"/>
+                    <polygon points="50,14 58,36 82,36 63,50 70,72 50,58 30,72 37,50 18,36 42,36" stroke="currentColor" stroke-width="1" fill="none" opacity="0.5"/>
+                  </svg>
+                </div>
+                <span class="wiki-zoom-badge" id="wiki-zoom-badge" title="Tap to zoom" hidden>
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                  </svg>
+                </span>
+              </div>
+            </div>
+
+            <!-- Text & Link Section -->
+            <div class="wiki-text-wrap">
+              <h3 class="wiki-title" id="wiki-title"></h3>
+              <p class="wiki-extract" id="wiki-extract"></p>
+              <div class="wiki-meta-row">
+                <a class="wiki-read-link" id="wiki-read-link" href="#" target="_blank" rel="noopener noreferrer">
+                  <span id="ui-wiki-read-more">Read more on Wikipedia</span>
+                  <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="wiki-credit-footer">
+            <span class="wiki-credit-text">Text/image: Wikipedia (CC BY-SA) / Wikimedia Commons</span>
+          </div>
+        </article>
+
+        <!-- SKELETON: AI Cards Loading (Shown while /api/explain is pending) -->
+        <div class="result-card ai-skeleton-card" id="card-ai-skeleton" hidden aria-hidden="true">
+          <div class="ai-skeleton-header">
+            <div class="sk-line sk-ai-badge"></div>
+            <div class="sk-line sk-title"></div>
+          </div>
+          <div class="sk-line sk-text"></div>
+          <div class="sk-line sk-text"></div>
+          <div class="sk-line sk-text short"></div>
+          <div class="ai-skeleton-pills">
+            <div class="sk-line sk-pill"></div>
+            <div class="sk-line sk-pill"></div>
+          </div>
+        </div>
+
         <!-- CARD 1: HERO -->
         <article class="result-card hero-card" id="card-hero">
+          <!-- AI Source Label -->
+          <div class="ai-source-badge-wrap">
+            <span class="ai-source-badge">
+              <span class="ai-source-dot"></span>
+              <span class="ai-source-text" id="ui-ai-source-label">Dharma Setu AI</span>
+            </span>
+          </div>
+
           <!-- Interpreted as & Did you mean -->
           <div class="interpreted-box" id="res-interpreted-box" hidden>
             <div class="interpreted-line">
@@ -489,6 +587,24 @@
     <button type="button" class="voice-cancel-btn ripple-effect" id="voice-cancel-btn">
       <span id="ui-voice-cancel-text">Band karein</span>
     </button>
+  <!-- Lightbox Modal for Wikipedia / Sacred Media -->
+  <div class="lightbox-modal" id="lightbox-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lightbox-caption">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <button type="button" class="lightbox-close-btn ripple-effect" id="lightbox-close-btn" aria-label="Close image preview">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div class="lightbox-img-wrap">
+        <img class="lightbox-img" id="lightbox-img" src="" alt="Enlarged view" />
+      </div>
+      <div class="lightbox-info">
+        <span class="lightbox-caption" id="lightbox-caption"></span>
+        <span class="lightbox-license">Wikimedia Commons / CC BY-SA</span>
+      </div>
+    </div>
   </div>
 
   <!-- Toast Notification -->

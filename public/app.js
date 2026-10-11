@@ -49,6 +49,9 @@ const I18N = {
     voiceCancel: "Band karein",
     voiceNotSupported: "Aapke browser mein aawaz suvidha uplabdh nahi hai.",
     voicePermissionDenied: "Microphone permission allow karein.",
+    wikiSourceLabel: "Wikipedia ke anusaar",
+    aiSourceLabel: "Dharma Setu AI",
+    readMoreWiki: "Wikipedia par vistar se padhein",
     loadingPhrases: [
       "Shastron se pramanik khoj jaari hai...",
       "Granthon ke sandarbh jode ja rahe hain...",
@@ -97,6 +100,9 @@ const I18N = {
     voiceCancel: "बंद करें",
     voiceNotSupported: "आपके ब्राउज़र में आवाज़ सुविधा उपलब्ध नहीं है।",
     voicePermissionDenied: "कृपया माइक्रोफ़ोन की अनुमति दें।",
+    wikiSourceLabel: "विकिपीडिया के अनुसार",
+    aiSourceLabel: "धर्म सेतु AI",
+    readMoreWiki: "विकिपीडिया पर विस्तार से पढ़ें",
     loadingPhrases: [
       "शास्त्रों से प्रामाणिक खोज जारी है...",
       "ग्रंथों के संदर्भ जोड़े जा रहे हैं...",
@@ -145,6 +151,9 @@ const I18N = {
     voiceCancel: "Cancel",
     voiceNotSupported: "Voice recognition is not supported in this browser.",
     voicePermissionDenied: "Please allow microphone permission.",
+    wikiSourceLabel: "According to Wikipedia",
+    aiSourceLabel: "Dharma Setu AI",
+    readMoreWiki: "Read more on Wikipedia",
     loadingPhrases: [
       "Searching authentic scriptures...",
       "Tracing connections and references...",
@@ -168,7 +177,9 @@ const STATE = {
   activeSheetNode: null,
   handsFreeMode: false,
   isSpeaking: false,
-  isListening: false
+  isListening: false,
+  wikiCache: new Map(),
+  currentWikiData: null
 };
 
 // ---------------------------------------------------------------------------
@@ -212,6 +223,26 @@ const DOM = {
   resInterpretedAs: document.getElementById("res-interpreted-as"),
   resDidYouMeanBox: document.getElementById("res-did-you-mean-box"),
   resDidYouMeanChips: document.getElementById("res-did-you-mean-chips"),
+
+  // Wikipedia Card & Grounding Elements
+  cardWiki: document.getElementById("card-wiki"),
+  cardWikiSkeleton: document.getElementById("card-wiki-skeleton"),
+  uiWikiSourceLabel: document.getElementById("ui-wiki-source-label"),
+  wikiLangPill: document.getElementById("wiki-lang-pill"),
+  wikiMediaWrap: document.getElementById("wiki-media-wrap"),
+  wikiImageBox: document.getElementById("wiki-image-box"),
+  wikiThumbImg: document.getElementById("wiki-thumb-img"),
+  wikiMandalaPlaceholder: document.getElementById("wiki-mandala-placeholder"),
+  wikiZoomBadge: document.getElementById("wiki-zoom-badge"),
+  wikiTitle: document.getElementById("wiki-title"),
+  wikiExtract: document.getElementById("wiki-extract"),
+  wikiReadLink: document.getElementById("wiki-read-link"),
+  uiWikiReadMore: document.getElementById("ui-wiki-read-more"),
+
+  // Dharma Setu AI Header & Skeletons
+  cardAiSkeleton: document.getElementById("card-ai-skeleton"),
+  cardHero: document.getElementById("card-hero"),
+  uiAiSourceLabel: document.getElementById("ui-ai-source-label"),
 
   resTitle: document.getElementById("res-title"),
   resTypeBadge: document.getElementById("res-type-badge"),
@@ -275,6 +306,13 @@ const DOM = {
   // Toast
   toastPopup: document.getElementById("toast-popup"),
   
+  // Lightbox Modal
+  lightboxModal: document.getElementById("lightbox-modal"),
+  lightboxBackdrop: document.getElementById("lightbox-backdrop"),
+  lightboxCloseBtn: document.getElementById("lightbox-close-btn"),
+  lightboxImg: document.getElementById("lightbox-img"),
+  lightboxCaption: document.getElementById("lightbox-caption"),
+
   // Dynamic UI labels
   uiTagline: document.getElementById("ui-tagline"),
   uiHomeHeading: document.getElementById("ui-home-heading"),
@@ -352,6 +390,9 @@ function applyLanguage(lang) {
   DOM.uiSheetExploreText.textContent = t.sheetExplore;
   if (DOM.uiInterpretedLabel) DOM.uiInterpretedLabel.textContent = t.interpretedLabel;
   if (DOM.uiDidYouMeanLabel) DOM.uiDidYouMeanLabel.textContent = t.didYouMeanLabel;
+  if (DOM.uiWikiSourceLabel && t.wikiSourceLabel) DOM.uiWikiSourceLabel.textContent = t.wikiSourceLabel;
+  if (DOM.uiAiSourceLabel && t.aiSourceLabel) DOM.uiAiSourceLabel.textContent = t.aiSourceLabel;
+  if (DOM.uiWikiReadMore && t.readMoreWiki) DOM.uiWikiReadMore.textContent = t.readMoreWiki;
   if (DOM.uiSunaoBtnText) DOM.uiSunaoBtnText.textContent = STATE.isSpeaking ? t.rokoBtn : t.sunaoBtn;
   if (DOM.uiHandsfreeText) DOM.uiHandsfreeText.textContent = t.handsfreeLabel;
   if (DOM.uiVoiceCancelText) DOM.uiVoiceCancelText.textContent = t.voiceCancel;
@@ -443,16 +484,114 @@ function showView(viewName) {
 }
 
 // ---------------------------------------------------------------------------
+// Wikipedia API & Media Helpers
+// ---------------------------------------------------------------------------
+async function fetchWikiData(query, lang) {
+  const normalized = query.trim().toLowerCase();
+  const cacheKey = `${lang}:${normalized}`;
+  if (STATE.wikiCache.has(cacheKey)) {
+    return STATE.wikiCache.get(cacheKey);
+  }
+
+  try {
+    const res = await fetch(`/api/wiki?q=${encodeURIComponent(query.trim())}&lang=${encodeURIComponent(lang)}`);
+    if (!res.ok) {
+      return { found: false };
+    }
+    const data = await res.json();
+    STATE.wikiCache.set(cacheKey, data);
+    return data;
+  } catch (err) {
+    console.warn("Wikipedia API fetch error:", err);
+    return { found: false };
+  }
+}
+
+function updateWikiMedia(wikiData, topicType = null) {
+  if (!wikiData || !wikiData.found) return;
+
+  // Rule 4: "Image only for person/place/scripture types; others show the mandala placeholder."
+  const imageAllowedTypes = ["person", "place", "scripture"];
+  const isAllowedType = !topicType || imageAllowedTypes.includes(topicType.toLowerCase());
+
+  if (isAllowedType && wikiData.imageUrl) {
+    DOM.wikiThumbImg.src = wikiData.imageUrl;
+    DOM.wikiThumbImg.alt = wikiData.title || "Sacred image";
+    DOM.wikiThumbImg.hidden = false;
+    DOM.wikiMandalaPlaceholder.hidden = true;
+    DOM.wikiZoomBadge.hidden = false;
+    DOM.wikiImageBox.style.cursor = "pointer";
+    DOM.wikiImageBox.setAttribute("aria-label", `View larger image of ${wikiData.title}`);
+  } else {
+    DOM.wikiThumbImg.hidden = true;
+    DOM.wikiThumbImg.src = "";
+    DOM.wikiMandalaPlaceholder.hidden = false;
+    DOM.wikiZoomBadge.hidden = true;
+    DOM.wikiImageBox.style.cursor = "default";
+    DOM.wikiImageBox.setAttribute("aria-label", "Mandala emblem");
+  }
+}
+
+function renderWikiCard(wikiData, knownType = null) {
+  DOM.cardWikiSkeleton.hidden = true;
+
+  if (!wikiData || !wikiData.found) {
+    DOM.cardWiki.hidden = true;
+    STATE.currentWikiData = null;
+    return;
+  }
+
+  STATE.currentWikiData = wikiData;
+  DOM.cardWiki.hidden = false;
+
+  DOM.wikiTitle.textContent = wikiData.title || "";
+  DOM.wikiExtract.textContent = wikiData.extract || "";
+
+  if (wikiData.wikiLang && wikiData.wikiLang.toLowerCase() === "hi") {
+    DOM.wikiLangPill.textContent = "HI";
+    DOM.wikiLangPill.hidden = false;
+  } else {
+    DOM.wikiLangPill.hidden = true;
+  }
+
+  if (wikiData.pageUrl) {
+    DOM.wikiReadLink.href = wikiData.pageUrl;
+    DOM.wikiReadLink.hidden = false;
+  } else {
+    DOM.wikiReadLink.hidden = true;
+  }
+
+  updateWikiMedia(wikiData, knownType);
+}
+
+function openLightbox(src, caption) {
+  if (!src) return;
+  DOM.lightboxImg.src = src;
+  DOM.lightboxCaption.textContent = caption || "";
+  DOM.lightboxModal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  DOM.lightboxModal.hidden = true;
+  DOM.lightboxImg.src = "";
+  document.body.style.overflow = "";
+}
+
+// ---------------------------------------------------------------------------
 // API Interaction
 // ---------------------------------------------------------------------------
 async function fetchExplanation(query, context = null, isLangSwitch = false) {
   const trimmed = query?.trim();
   if (!trimmed) return;
 
-  // Close any open bottom sheet
+  // Close any open bottom sheet & stop narration
   closeBottomSheet();
+  if (typeof VoiceAssistant !== "undefined") {
+    VoiceAssistant.stopSpeaking();
+  }
 
-  // If this is a new exploration, manage topic history for breadcrumb
+  // Manage topic history for breadcrumb navigation
   if (STATE.currentQuery && STATE.currentQuery.toLowerCase() !== trimmed.toLowerCase() && !isLangSwitch) {
     STATE.topicHistory.push({
       q: STATE.currentQuery,
@@ -469,43 +608,113 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
   newUrl.searchParams.set("lang", STATE.lang);
   window.history.pushState({ q: trimmed, lang: STATE.lang }, "", newUrl.toString());
 
-  // Show loading view with cycling phrases
-  showView("loading");
-  startLoadingPhrases();
+  // Switch immediately to result view so user perceives instant progress
+  showView("result");
 
-  try {
-    const payload = {
-      q: trimmed,
-      lang: STATE.lang
+  // Show skeletons at the top and below
+  DOM.cardWikiSkeleton.hidden = false;
+  DOM.cardWiki.hidden = true;
+  DOM.cardAiSkeleton.hidden = false;
+
+  // Hide AI result cards until they are loaded
+  DOM.cardHero.hidden = true;
+  DOM.cardStory.hidden = true;
+  DOM.cardConnections.hidden = true;
+  DOM.cardSources.hidden = true;
+  DOM.cardRealLife.hidden = true;
+  DOM.cardTraditions.hidden = true;
+  DOM.cardFollowups.hidden = true;
+
+  // Update breadcrumb navigation
+  if (STATE.topicHistory.length > 0) {
+    const prev = STATE.topicHistory[STATE.topicHistory.length - 1];
+    DOM.breadcrumbPrevTopic.textContent = prev.title || prev.q;
+    DOM.breadcrumbBar.hidden = false;
+  } else {
+    DOM.breadcrumbBar.hidden = true;
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  // Check if we have wiki in local cache for immediate grounding context
+  const wikiCacheKey = `${STATE.lang}:${trimmed.toLowerCase()}`;
+  const preCachedWiki = STATE.wikiCache.get(wikiCacheKey);
+
+  // Fire /api/wiki and /api/explain IN PARALLEL
+  const wikiPromise = fetchWikiData(trimmed, STATE.lang);
+
+  const explainPayload = {
+    q: trimmed,
+    lang: STATE.lang
+  };
+  if (context) {
+    explainPayload.context = context;
+  }
+  if (preCachedWiki && preCachedWiki.found) {
+    explainPayload.wiki_context = {
+      title: preCachedWiki.title,
+      extract: preCachedWiki.extract
     };
-    if (context) {
-      payload.context = context;
+  }
+
+  const explainPromise = fetch("/api/explain", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(explainPayload)
+  });
+
+  // Track Wikipedia resolution as soon as it arrives!
+  wikiPromise.then((wikiData) => {
+    if (STATE.currentQuery === trimmed) {
+      renderWikiCard(wikiData, STATE.currentData?.type);
     }
+  }).catch((err) => {
+    console.warn("Wiki promise error:", err);
+    if (STATE.currentQuery === trimmed) {
+      DOM.cardWikiSkeleton.hidden = true;
+      DOM.cardWiki.hidden = true;
+    }
+  });
 
-    const response = await fetch("/api/explain", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    stopLoadingPhrases();
-
+  // Await AI explanation
+  try {
+    const response = await explainPromise;
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));
       throw new Error(errJson.error || `HTTP error ${response.status}`);
     }
 
     const data = await response.json();
+    if (STATE.currentQuery !== trimmed) return; // Stale query guard
+
     STATE.currentData = data;
+
+    // Hide AI skeleton
+    DOM.cardAiSkeleton.hidden = true;
+
+    // Render full AI response below the Wikipedia card
     renderResult(data);
-    showView("result");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Re-verify Wikipedia image with official data.type
+    if (STATE.currentWikiData) {
+      updateWikiMedia(STATE.currentWikiData, data.type);
+    }
   } catch (err) {
     console.error("Error fetching explanation:", err);
-    stopLoadingPhrases();
-    showView("error");
+    if (STATE.currentQuery !== trimmed) return;
+
+    DOM.cardAiSkeleton.hidden = true;
+
+    if (STATE.currentWikiData && STATE.currentWikiData.found) {
+      DOM.cardHero.hidden = false;
+      DOM.resTitle.textContent = STATE.currentWikiData.title;
+      DOM.resTypeBadge.textContent = "AI Pratiksha";
+      DOM.resSummary.textContent = (I18N[STATE.lang] || I18N.hinglish).errorMsg;
+    } else {
+      showView("error");
+    }
   }
 }
 
@@ -536,6 +745,8 @@ function stopLoadingPhrases() {
 // Render Results
 // ---------------------------------------------------------------------------
 function renderResult(data) {
+  // Ensure hero card is visible
+  DOM.cardHero.hidden = false;
   // Breadcrumb navigation update
   if (STATE.topicHistory.length > 0) {
     const prev = STATE.topicHistory[STATE.topicHistory.length - 1];
@@ -1016,6 +1227,35 @@ function initEventListeners() {
   if (DOM.voiceModalBackdrop) {
     DOM.voiceModalBackdrop.addEventListener("click", () => VoiceAssistant.stopListening());
   }
+
+  // Wikipedia Thumbnail Lightbox Trigger
+  if (DOM.wikiImageBox) {
+    const triggerLightbox = () => {
+      if (!DOM.wikiThumbImg.hidden && DOM.wikiThumbImg.src) {
+        openLightbox(DOM.wikiThumbImg.src, DOM.wikiTitle.textContent);
+      }
+    };
+    DOM.wikiImageBox.addEventListener("click", triggerLightbox);
+    DOM.wikiImageBox.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        triggerLightbox();
+      }
+    });
+  }
+
+  // Lightbox Close Handlers
+  if (DOM.lightboxCloseBtn) {
+    DOM.lightboxCloseBtn.addEventListener("click", closeLightbox);
+  }
+  if (DOM.lightboxBackdrop) {
+    DOM.lightboxBackdrop.addEventListener("click", closeLightbox);
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && DOM.lightboxModal && !DOM.lightboxModal.hidden) {
+      closeLightbox();
+    }
+  });
 
   // Browser Navigation History (PopState)
   window.addEventListener("popstate", (e) => {

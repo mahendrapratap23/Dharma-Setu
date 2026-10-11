@@ -1,15 +1,32 @@
 # Dharma Setu (धर्म सेतु)
 
-An AI-powered mobile-first explorer for Hindu Dharma. Every answer is generated live from Google's Gemini API (`gemini-3.5-flash`), cited with authentic Hindu scriptures (Valmiki Ramayana, Ramcharitmanas, Mahabharata, Puranas), rendered with an interactive SVG Connection Map, and cached globally using Cloudflare Workers KV.
+An AI-powered mobile-first explorer for Hindu Dharma powered by a **hybrid of Wikipedia and Google Gemini**. Every query is verified and grounded against Wikipedia's encyclopedic knowledge before being enriched by Google Gemini (`gemini-3.5-flash`) with scripture citations (Valmiki Ramayana, Ramcharitmanas, Mahabharata, Puranas), interactive SVG Connection Maps, and voice narration. Cached globally using Cloudflare Workers KV for ultra-fast response times.
 
 ---
 
-## Architecture & Tech Stack
+## Hybrid Search Architecture (Wikipedia + Gemini)
 
-- **Frontend**: Plain HTML5, CSS3, and Vanilla JavaScript (mobile-first, zero frameworks, zero build tools).
-- **Backend**: Cloudflare Worker with Static Assets serving `/public` and handling `POST /api/explain`.
-- **AI Engine**: Google Gemini REST API (`gemini-3.5-flash`) via structured JSON schema (`responseSchema`) and strict system prompt.
-- **Cache & Rate Limit**: Cloudflare KV (`CACHE` namespace) with 30-day response caching and per-IP rate limiting (20 requests/minute).
+1. **Parallel Execution**: On search, the frontend dispatches `GET /api/wiki` and `POST /api/explain` concurrently.
+2. **Instant Wikipedia Grounding Card**:
+   - Resolves misspellings and phonetic transliterations (e.g. `drapati` -> `Draupadi`) using MediaWiki fuzzy title search.
+   - Fetches authentic page summaries (preferring Hindi extract from `hi.wikipedia.org` when language is `hi` or `hinglish`).
+   - Renders at the top with thumbnail (tap for interactive Lightbox modal), title, 2–3 line clamped extract, "Read more on Wikipedia" link, and standard CC BY-SA attribution.
+   - **Image Rule**: Real photos/artwork display exclusively for `person`, `place`, or `scripture` topics; concepts, events, and traditions (`concept`, `event`, `tradition`) display the sacred rotating mandala placeholder.
+3. **AI Scripture Synthesis**:
+   - Below the Wikipedia card, Gemini delivers authenticated scriptural commentary, episodic story tabs, dynamic SVG relationship graphs, and daily life practices.
+   - Gemini prompt is strictly grounded with Wikipedia reference context to avoid factual drift.
+   - Skeletons stream smoothly while AI synthesizes results.
+4. **Distinct Source Badges**:
+   - `Wikipedia ke anusaar` vs `Dharma Setu AI`.
+5. **30-Day KV Caching**:
+   - Both Wikipedia summaries (`wiki:<lang>:<query>`) and Gemini explanations (`explain:<lang>:<query>`) are cached in Cloudflare Workers KV for 30 days (`2,592,000` seconds).
+
+---
+
+## Endpoints
+
+- `GET /api/wiki?q=...&lang=...`: Returns `{ found: true, title, extract, imageUrl, pageUrl, wikiLang }` or `{ found: false }`.
+- `POST /api/explain`: Body `{ q, lang, context?, wiki_context? }`. Returns structured JSON with title, type, summary, story, connections, sources, and real_life.
 
 ---
 
@@ -17,18 +34,18 @@ An AI-powered mobile-first explorer for Hindu Dharma. Every answer is generated 
 
 ```text
 ├── public/                 # Static Assets (served by Cloudflare Workers Assets)
-│   ├── index.html          # Semantic HTML5 markup, meta tags, Turnstile hook
-│   ├── style.css           # Mobile-first stylesheet (Dark Indigo & Light Cream themes)
-│   ├── app.js              # Vanilla JS app, SVG network graph, i18n dictionary
+│   ├── index.html          # Semantic HTML5 markup, Lightbox modal, Turnstile hook
+│   ├── style.css           # Mobile-first stylesheet (Wikipedia card, Dark Indigo & Light Cream)
+│   ├── app.js              # Vanilla JS app, parallel fetch, Lightbox, SVG network graph, i18n
 │   └── favicon.svg         # Sacred glowing Diya SVG favicon
 ├── src/
-│   └── index.js            # Cloudflare Worker backend (routing, KV cache, Gemini API)
+│   └── index.js            # Cloudflare Worker backend (Wikipedia MediaWiki API, KV cache, Gemini)
 ├── test/
 │   ├── test-worker.mjs     # Automated backend unit test suite
 │   └── server.mjs          # Local HTTP test server with static asset serving
 ├── wrangler.toml           # Cloudflare deployment config & KV bindings
 ├── package.json            # Node scripts
-└── README.md               # Beginner deploy guide & manual checklist
+└── README.md               # Beginner deploy guide & verification test list
 ```
 
 ---
@@ -204,3 +221,20 @@ Use this checklist to test the app on a mobile device:
 - [ ] **Theme Switching**: Sun/Moon toggle switches between Dark Indigo and Cream modes; selection persists after reload.
 - [ ] **Language Switching**: Hinglish, Hindi (हिंदी), and English correctly translate UI labels and content.
 - [ ] **Shareable URL**: URLs like `/?q=Hanuman&lang=hi` load directly into the query results.
+
+---
+
+## Hybrid Search Test List
+
+Test these specific queries to verify the complete Wikipedia + Gemini hybrid workflow:
+
+| Query | What It Tests | Expected Wikipedia Result | Image / Media | Expected AI Result |
+| :--- | :--- | :--- | :--- | :--- |
+| **`drapati`** | Fuzzy typo resolution & transliteration | Resolves to **Draupadi** (द्रौपदी in Hindi) | Raja Ravi Varma portrait (Lightbox zoom works) | "Maine samjha: Draupadi", Mahabharata Sabhaparva context |
+| **`draupadi`** | Canonical topic lookup | Direct match **Draupadi** with summary | Portrait thumbnail with Lightbox preview | Full Panchali narrative, 5 Pandavas connections |
+| **`Ram`** | Disambiguation handling (`Ram` -> `Rama`) | Matches **Rama** (राम) from Itihasa | Adhyatma Ramayana / classical deity art | Valmiki Ramayana & Ramcharitmanas citations |
+| **`Hanuman`** | Deity lookup & Hindi extraction | Matches **Hanuman** (हनुमान) | Deity artwork thumbnail | Sundarkand references, Panchamukha relations |
+| **`Ayodhya`** | Place type (`place`) | Matches holy city **Ayodhya** (अयोध्या) | City/temple image (allowed for `place` type) | Ram Janmabhoomi, Sarayu river, Kosala kingdom map |
+| **`Ekadashi`** | Concept/tradition (`concept`/`tradition`) | Matches **Ekadashi** (एकादशी) observance | **Mandala Placeholder** (No photo per Rule 4) | 24 Ekadashis, Nirjala/Harivasara rules, Padma Purana |
+| **`Diwali`** | Event/festival (`event`/`tradition`) | Matches **Diwali** (दीपावली) festival | **Mandala Placeholder** (No photo per Rule 4) | Rama's return to Ayodhya, Lakshmi Puja traditions |
+

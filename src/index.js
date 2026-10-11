@@ -199,7 +199,7 @@ async function checkRateLimit(request, env) {
 /**
  * Calls Gemini REST API with retry on 429/5xx and JSON parse retry.
  */
-async function callGeminiApi({ q, lang, context }, env) {
+async function callGeminiApi({ q, lang, context, wiki_context }, env) {
   const apiKey = env?.GEMINI_API_KEY;
   if (!apiKey) {
     throw { status: 500, message: "GEMINI_API_KEY is not configured on the server." };
@@ -212,6 +212,11 @@ async function callGeminiApi({ q, lang, context }, env) {
     let promptText = `User Question: "${q}"\nSelected Language: "${lang}"`;
     if (context && typeof context === "string" && context.trim().length > 0) {
       promptText += `\nContext/Previous Topic: "${context.trim().slice(0, 200)}"`;
+    }
+    if (wiki_context && (wiki_context.extract || typeof wiki_context === "string")) {
+      const extractText = (wiki_context.extract || wiki_context).slice(0, 1000);
+      const titleText = wiki_context.title || q;
+      promptText += `\n\nReference Context from Wikipedia (Title: "${titleText}"):\n"${extractText}"\nInstruction for Reference Context: Use this as reference context. Prefer it for facts about the person; add scripture sources, connections, traditions and real-life relevance. If the context conflicts with scriptures, mention both.`;
     }
     if (extraReminder) {
       promptText += `\nCRITICAL: Output MUST be strictly valid JSON adhering to the schema. No markdown code blocks, no trailing comments.`;
@@ -331,6 +336,199 @@ async function callGeminiApi({ q, lang, context }, env) {
   }
 }
 
+const DHARMA_KEYWORDS = [
+  "hindu", "mahabharata", "ramayana", "deity", "goddess", "god",
+  "avatar", "temple", "sanskrit", "epic", "festival", "purana",
+  "vedic", "dharma", "lunar", "india", "sacred"
+];
+
+const WIKI_USER_AGENT = "DharmaSetu/1.0 (https://dharmasetu.org; feedback@dharmasetu.org)";
+const WIKI_CACHE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
+
+/**
+ * Searches and fetches Wikipedia summary for a topic.
+ * Resolves misspellings (e.g. drapati -> Draupadi).
+ */
+export async function getWikiSummary(env, query, lang = "en") {
+  if (!query || typeof query !== "string") return { found: false };
+  const trimmed = query.trim();
+  if (!trimmed) return { found: false };
+
+  const normalized = normalizeQuery(trimmed);
+  const cacheKey = `wiki:${lang}:${normalized}`;
+
+  // 1. Check KV cache (30 days TTL)
+  if (env?.CACHE) {
+    try {
+      const cached = await env.CACHE.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.warn("KV wiki cache read error:", e);
+    }
+  }
+
+  try {
+    let searchQ = trimmed;
+    // Map common aliases where Wikipedia article is differently named
+    if (normalized === "ram") searchQ = "Rama";
+
+    // Call MediaWiki title search
+    const searchUrl = `https://en.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(searchQ)}&limit=5`;
+    const searchRes = await fetch(searchUrl, {
+      headers: { "User-Agent": WIKI_USER_AGENT }
+    });
+
+    if (!searchRes.ok) {
+      return { found: false };
+    }
+
+    const searchData = await searchRes.json();
+    const pages = searchData.pages || [];
+    if (pages.length === 0) {
+      return { found: false };
+    }
+
+    // Rank candidates: prioritize exact matches and dharmic relevance
+    pages.sort((a, b) => {
+      const score = (p) => {
+        let s = 0;
+        const t = (p.title || "").toLowerCase();
+        const qLower = normalized;
+        if (t === qLower) s += 100;
+        else if (t.startsWith(qLower) || qLower.startsWith(t)) s += 50;
+        else if (t.includes(qLower)) s += 25;
+        const desc = (p.description || "").toLowerCase();
+        if (DHARMA_KEYWORDS.some(k => desc.includes(k))) s += 40;
+        return s;
+      };
+      return score(b) - score(a);
+    });
+
+    // Try candidates in order
+    let bestEnSummary = null;
+    for (const page of pages) {
+      const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(page.key || page.title)}`;
+      const sumRes = await fetch(sumUrl, {
+        headers: { "User-Agent": WIKI_USER_AGENT }
+      });
+      if (!sumRes.ok) continue;
+      const sum = await sumRes.json();
+      if (sum.type === "disambiguation" || !sum.extract) continue;
+      bestEnSummary = sum;
+      break;
+    }
+
+    if (!bestEnSummary) {
+      return { found: false };
+    }
+
+    let finalTitle = bestEnSummary.title;
+    let finalExtract = bestEnSummary.extract;
+    let finalPageUrl = bestEnSummary.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(bestEnSummary.title)}`;
+    let finalImageUrl = bestEnSummary.originalimage?.source || bestEnSummary.thumbnail?.source || null;
+    let finalWikiLang = "en";
+
+    // If lang is "hi" or "hinglish", try Hindi Wikipedia summary
+    if (lang === "hi" || lang === "hinglish") {
+      try {
+        const llUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=hi&titles=${encodeURIComponent(bestEnSummary.title)}&format=json`;
+        const llRes = await fetch(llUrl, {
+          headers: { "User-Agent": WIKI_USER_AGENT }
+        });
+        if (llRes.ok) {
+          const llData = await llRes.json();
+          const queryPages = llData.query?.pages || {};
+          let hiTitle = null;
+          for (const id in queryPages) {
+            if (queryPages[id].langlinks && queryPages[id].langlinks.length > 0) {
+              hiTitle = queryPages[id].langlinks[0]["*"];
+              break;
+            }
+          }
+          if (hiTitle) {
+            const hiSumUrl = `https://hi.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hiTitle)}`;
+            const hiSumRes = await fetch(hiSumUrl, {
+              headers: { "User-Agent": WIKI_USER_AGENT }
+            });
+            if (hiSumRes.ok) {
+              const hiSum = await hiSumRes.json();
+              if (hiSum.type !== "disambiguation" && hiSum.extract) {
+                finalTitle = hiSum.title;
+                finalExtract = hiSum.extract;
+                finalPageUrl = hiSum.content_urls?.desktop?.page || `https://hi.wikipedia.org/wiki/${encodeURIComponent(hiTitle)}`;
+                finalWikiLang = "hi";
+                if (!finalImageUrl && hiSum.thumbnail?.source) {
+                  finalImageUrl = hiSum.thumbnail.source;
+                }
+              }
+            }
+          }
+        }
+      } catch (hiErr) {
+        console.warn("Hindi Wikipedia summary fetch error:", hiErr);
+      }
+    }
+
+    const result = {
+      found: true,
+      title: finalTitle,
+      extract: finalExtract,
+      imageUrl: finalImageUrl,
+      pageUrl: finalPageUrl,
+      wikiLang: finalWikiLang
+    };
+
+    // Cache in KV for 30 days
+    if (env?.CACHE) {
+      try {
+        await env.CACHE.put(cacheKey, JSON.stringify(result), {
+          expirationTtl: WIKI_CACHE_TTL_SECONDS
+        });
+      } catch (putErr) {
+        console.warn("KV wiki cache write error:", putErr);
+      }
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Wikipedia search error:", err);
+    return { found: false };
+  }
+}
+
+/**
+ * Handle GET /api/wiki
+ */
+async function handleWiki(request, env, corsHeaders) {
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q");
+  const lang = url.searchParams.get("lang") || "hinglish";
+
+  if (!q || q.trim().length === 0 || q.length > 200) {
+    return jsonResponse({ error: "Invalid 'q' parameter." }, 400, {}, corsHeaders);
+  }
+
+  const normalized = normalizeQuery(q);
+  const cacheKey = `wiki:${lang}:${normalized}`;
+  let isCached = false;
+  if (env?.CACHE) {
+    try {
+      const hit = await env.CACHE.get(cacheKey);
+      if (hit) isCached = true;
+    } catch (e) {}
+  }
+
+  const result = await getWikiSummary(env, q, lang);
+  return jsonResponse(
+    result,
+    200,
+    { "X-Dharma-Wiki-Cache": isCached ? "HIT" : "MISS" },
+    corsHeaders
+  );
+}
+
 /**
  * Handle POST /api/explain
  */
@@ -359,7 +557,7 @@ async function handleExplain(request, env, corsHeaders) {
     );
   }
 
-  const { q, lang, context } = body || {};
+  const { q, lang, context, wiki_context } = body || {};
 
   // Validation: q must be 1-200 chars
   if (!q || typeof q !== "string" || q.trim().length < 1 || q.trim().length > 200) {
@@ -380,26 +578,6 @@ async function handleExplain(request, env, corsHeaders) {
       corsHeaders
     );
   }
-
-  // Cloudflare Turnstile Verification Hook Point (Optional bot protection):
-  /*
-  if (env?.TURNSTILE_SECRET_KEY && body?.turnstileToken) {
-    const ip = request.headers.get("CF-Connecting-IP") || "";
-    const formData = new URLSearchParams();
-    formData.append("secret", env.TURNSTILE_SECRET_KEY);
-    formData.append("response", body.turnstileToken);
-    if (ip) formData.append("remoteip", ip);
-
-    const tsRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      body: formData
-    });
-    const tsOutcome = await tsRes.json();
-    if (!tsOutcome.success) {
-      return jsonResponse({ error: "Turnstile verification failed." }, 403, {}, corsHeaders);
-    }
-  }
-  */
 
   const normalized = normalizeQuery(q);
   // If context is present, include in cache key so contextual follow-ups cache accurately
@@ -428,9 +606,22 @@ async function handleExplain(request, env, corsHeaders) {
     }
   }
 
+  // Grounding reference context
+  let wikiContext = wiki_context;
+  if (!wikiContext) {
+    try {
+      const autoWiki = await getWikiSummary(env, q.trim(), lang);
+      if (autoWiki && autoWiki.title && autoWiki.extract) {
+        wikiContext = autoWiki;
+      }
+    } catch (e) {
+      console.warn("Auto-wiki fetch error in explain:", e);
+    }
+  }
+
   // Call Gemini REST API
   try {
-    const data = await callGeminiApi({ q: q.trim(), lang, context }, env);
+    const data = await callGeminiApi({ q: q.trim(), lang, context, wiki_context: wikiContext }, env);
 
     // Rule: Never cache error, empty or confidence:"low" results!
     const shouldCache = data && data.title && data.confidence !== "low";
@@ -493,7 +684,15 @@ export default {
       return jsonResponse({ status: "ok", app: "Dharma Setu" }, 200, {}, corsHeaders);
     }
 
-    // Worker explain endpoint
+    // Worker wiki endpoint: GET /api/wiki?q=...&lang=...
+    if (url.pathname === "/api/wiki") {
+      if (request.method !== "GET") {
+        return jsonResponse({ error: "Method not allowed. Use GET." }, 405, {}, corsHeaders);
+      }
+      return handleWiki(request, env, corsHeaders);
+    }
+
+    // Worker explain endpoint: POST /api/explain
     if (url.pathname === "/api/explain") {
       if (request.method !== "POST") {
         return jsonResponse({ error: "Method not allowed. Use POST." }, 405, {}, corsHeaders);
