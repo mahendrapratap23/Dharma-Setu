@@ -271,6 +271,39 @@
             <span class="type-badge" id="res-type-badge"></span>
           </div>
           <p class="hero-summary" id="res-summary"></p>
+
+          <!-- Voice Narration "Sunao" & Hands-Free Audio Control Bar -->
+          <div class="audio-control-bar" id="audio-control-bar">
+            <button type="button" class="sunao-btn ripple-effect" id="sunao-btn" aria-label="Sunao (Voice Narration)">
+              <span class="sunao-icon" id="sunao-icon">
+                <svg class="icon-play" id="icon-sunao-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg class="icon-stop" id="icon-sunao-stop" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" hidden>
+                  <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
+                </svg>
+              </span>
+              <span class="sunao-text" id="ui-sunao-btn-text">Sunao</span>
+              <span class="audio-waveform-bars" id="audio-waveform-bars" aria-hidden="true" hidden>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+                <span class="wave-bar"></span>
+              </span>
+            </button>
+
+            <button type="button" class="handsfree-toggle-btn ripple-effect" id="handsfree-toggle-btn" aria-pressed="false" title="Hands-free conversation mode">
+              <svg class="handsfree-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span class="handsfree-label" id="ui-handsfree-text">Hands-Free</span>
+              <span class="handsfree-status-dot" id="handsfree-status-dot"></span>
+            </button>
+          </div>
+
           <div class="low-confidence-notice" id="res-low-confidence" hidden>
             <span class="notice-icon" aria-hidden="true">ℹ️</span>
             <span id="ui-low-conf-text">Is jawab ko shastron se khud verify karein.</span>
@@ -430,6 +463,32 @@
         </svg>
       </button>
     </div>
+  <!-- Voice Recognition Listening Modal Overlay -->
+  <div class="voice-modal-backdrop" id="voice-modal-backdrop" hidden></div>
+  <div class="voice-modal" id="voice-modal" hidden role="dialog" aria-modal="true" aria-labelledby="voice-status-text">
+    <div class="voice-flame-circle" aria-hidden="true">
+      <div class="voice-pulse-ring"></div>
+      <div class="voice-pulse-ring r2"></div>
+      <svg class="voice-mic-icon" viewBox="0 0 24 24" width="34" height="34" stroke="currentColor" stroke-width="2" fill="none">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+        <line x1="12" y1="19" x2="12" y2="23"></line>
+        <line x1="8" y1="23" x2="16" y2="23"></line>
+      </svg>
+    </div>
+    <h3 class="voice-title" id="voice-status-text">Sun raha hoon...</h3>
+    <p class="voice-hint" id="voice-hint-text">Poochhein: "Krishna kaun hain?", "Ekadashi mahatmya"...</p>
+    <div class="voice-transcript" id="voice-transcript" aria-live="polite"></div>
+    <div class="voice-bars-animated" aria-hidden="true">
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+    </div>
+    <button type="button" class="voice-cancel-btn ripple-effect" id="voice-cancel-btn">
+      <span id="ui-voice-cancel-text">Band karein</span>
+    </button>
   </div>
 
   <!-- Toast Notification -->

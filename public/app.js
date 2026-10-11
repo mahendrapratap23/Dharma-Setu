@@ -39,6 +39,16 @@ const I18N = {
     sheetExplore: "Iske bare mein jaanein",
     toastCopied: "Link clipboard par copy ho gaya!",
     toastSummaryCopied: "Jawab copy ho gaya!",
+    sunaoBtn: "Sunao",
+    rokoBtn: "Roko",
+    handsfreeLabel: "Hands-Free",
+    handsfreeOnToast: "Hands-free mode shuru! Jawab sunne ke baad agla sawal bolein.",
+    handsfreeOffToast: "Hands-free mode band.",
+    listeningTitle: "Sun raha hoon...",
+    listeningHint: "Poochhein: 'Krishna kaun hain?', 'Ekadashi katha'...",
+    voiceCancel: "Band karein",
+    voiceNotSupported: "Aapke browser mein aawaz suvidha uplabdh nahi hai.",
+    voicePermissionDenied: "Microphone permission allow karein.",
     loadingPhrases: [
       "Shastron se pramanik khoj jaari hai...",
       "Granthon ke sandarbh jode ja rahe hain...",
@@ -77,6 +87,16 @@ const I18N = {
     sheetExplore: "इसके बारे में जानें",
     toastCopied: "लिंक कॉपी हो गया!",
     toastSummaryCopied: "उत्तर कॉपी हो गया!",
+    sunaoBtn: "सुनें",
+    rokoBtn: "रोकें",
+    handsfreeLabel: "हैंड्स-फ्री",
+    handsfreeOnToast: "हैंड्स-फ्री मोड सक्रिय! उत्तर सुनने के बाद अगला प्रश्न बोलें।",
+    handsfreeOffToast: "हैंड्स-फ्री मोड बंद।",
+    listeningTitle: "सुन रहा हूँ...",
+    listeningHint: "पूछें: 'कृष्ण कौन हैं?', 'एकादशी माहात्म्य'...",
+    voiceCancel: "बंद करें",
+    voiceNotSupported: "आपके ब्राउज़र में आवाज़ सुविधा उपलब्ध नहीं है।",
+    voicePermissionDenied: "कृपया माइक्रोफ़ोन की अनुमति दें।",
     loadingPhrases: [
       "शास्त्रों से प्रामाणिक खोज जारी है...",
       "ग्रंथों के संदर्भ जोड़े जा रहे हैं...",
@@ -115,6 +135,16 @@ const I18N = {
     sheetExplore: "Explore this topic",
     toastCopied: "Link copied to clipboard!",
     toastSummaryCopied: "Summary copied to clipboard!",
+    sunaoBtn: "Listen",
+    rokoBtn: "Stop",
+    handsfreeLabel: "Hands-Free",
+    handsfreeOnToast: "Hands-free mode active! Speak next question after answer.",
+    handsfreeOffToast: "Hands-free mode disabled.",
+    listeningTitle: "Listening...",
+    listeningHint: "Ask: 'Who is Krishna?', 'Why fast on Ekadashi?'...",
+    voiceCancel: "Cancel",
+    voiceNotSupported: "Voice recognition is not supported in this browser.",
+    voicePermissionDenied: "Please allow microphone permission.",
     loadingPhrases: [
       "Searching authentic scriptures...",
       "Tracing connections and references...",
@@ -135,7 +165,10 @@ const STATE = {
   recentSearches: JSON.parse(localStorage.getItem("dharmasetu_recent") || "[]"),
   loadingTimer: null,
   activeStoryTab: 0,
-  activeSheetNode: null
+  activeSheetNode: null,
+  handsFreeMode: false,
+  isSpeaking: false,
+  isListening: false
 };
 
 // ---------------------------------------------------------------------------
@@ -157,6 +190,7 @@ const DOM = {
   homeSearchForm: document.getElementById("home-search-form"),
   homeSearchInput: document.getElementById("home-search-input"),
   homeClearBtn: document.getElementById("home-clear-btn"),
+  homeMicBtn: document.getElementById("home-mic-btn"),
   exampleChips: document.getElementById("example-chips"),
   recentSearchesBox: document.getElementById("recent-searches-box"),
   recentChips: document.getElementById("recent-chips"),
@@ -183,6 +217,16 @@ const DOM = {
   resTypeBadge: document.getElementById("res-type-badge"),
   resSummary: document.getElementById("res-summary"),
   resLowConfidence: document.getElementById("res-low-confidence"),
+
+  // Audio Control Bar (Phase C: Sunao & Hands-Free)
+  sunaoBtn: document.getElementById("sunao-btn"),
+  uiSunaoBtnText: document.getElementById("ui-sunao-btn-text"),
+  iconSunaoPlay: document.getElementById("icon-sunao-play"),
+  iconSunaoStop: document.getElementById("icon-sunao-stop"),
+  audioWaveformBars: document.getElementById("audio-waveform-bars"),
+  handsfreeToggleBtn: document.getElementById("handsfree-toggle-btn"),
+  uiHandsfreeText: document.getElementById("ui-handsfree-text"),
+  handsfreeStatusDot: document.getElementById("handsfree-status-dot"),
   
   cardStory: document.getElementById("card-story"),
   storyTabsNav: document.getElementById("story-tabs-nav"),
@@ -207,6 +251,7 @@ const DOM = {
   stickyBottomBar: document.getElementById("sticky-bottom-bar"),
   stickySearchForm: document.getElementById("sticky-search-form"),
   stickySearchInput: document.getElementById("sticky-search-input"),
+  stickyMicBtn: document.getElementById("sticky-mic-btn"),
   
   // Bottom Sheet
   bottomSheetBackdrop: document.getElementById("bottom-sheet-backdrop"),
@@ -218,6 +263,15 @@ const DOM = {
   sheetExploreBtn: document.getElementById("sheet-explore-btn"),
   sheetCloseBtn: document.getElementById("sheet-close-btn"),
   
+  // Voice Modal Overlay
+  voiceModalBackdrop: document.getElementById("voice-modal-backdrop"),
+  voiceModal: document.getElementById("voice-modal"),
+  voiceStatusText: document.getElementById("voice-status-text"),
+  voiceHintText: document.getElementById("voice-hint-text"),
+  voiceTranscript: document.getElementById("voice-transcript"),
+  voiceCancelBtn: document.getElementById("voice-cancel-btn"),
+  uiVoiceCancelText: document.getElementById("ui-voice-cancel-text"),
+
   // Toast
   toastPopup: document.getElementById("toast-popup"),
   
@@ -298,6 +352,10 @@ function applyLanguage(lang) {
   DOM.uiSheetExploreText.textContent = t.sheetExplore;
   if (DOM.uiInterpretedLabel) DOM.uiInterpretedLabel.textContent = t.interpretedLabel;
   if (DOM.uiDidYouMeanLabel) DOM.uiDidYouMeanLabel.textContent = t.didYouMeanLabel;
+  if (DOM.uiSunaoBtnText) DOM.uiSunaoBtnText.textContent = STATE.isSpeaking ? t.rokoBtn : t.sunaoBtn;
+  if (DOM.uiHandsfreeText) DOM.uiHandsfreeText.textContent = t.handsfreeLabel;
+  if (DOM.uiVoiceCancelText) DOM.uiVoiceCancelText.textContent = t.voiceCancel;
+  if (DOM.voiceHintText) DOM.voiceHintText.textContent = t.listeningHint;
   DOM.breadcrumbBackText.textContent = t.backText;
   DOM.errorTitle.textContent = t.errorTitle;
   DOM.errorMessage.textContent = t.errorMsg;
@@ -368,6 +426,7 @@ function showView(viewName) {
   document.body.setAttribute("data-view", viewName);
 
   if (viewName !== "result") {
+    if (typeof VoiceAssistant !== "undefined") VoiceAssistant.stopSpeaking();
     document.body.removeAttribute("data-topic-type");
   } else if (STATE.currentData && STATE.currentData.type) {
     document.body.setAttribute("data-topic-type", STATE.currentData.type);
@@ -584,6 +643,21 @@ function renderResult(data) {
 
   // Pre-fill sticky search input with current topic
   DOM.stickySearchInput.value = "";
+
+  // Voice Assistant Narration Hook (Phase C)
+  if (typeof VoiceAssistant !== "undefined") {
+    VoiceAssistant.updateSunaoUI(false);
+    if (STATE.handsFreeMode) {
+      const textToSpeak = data.speech_text || data.summary || "";
+      if (textToSpeak) {
+        setTimeout(() => {
+          if (STATE.handsFreeMode && !DOM.resultView.hidden) {
+            VoiceAssistant.speak(textToSpeak);
+          }
+        }, 550);
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -923,6 +997,26 @@ function initEventListeners() {
   DOM.shareBtn.addEventListener("click", handleShare);
   DOM.copySummaryBtn.addEventListener("click", handleCopySummary);
 
+  // Voice Assistant Controls (Phase C)
+  if (DOM.sunaoBtn) {
+    DOM.sunaoBtn.addEventListener("click", () => VoiceAssistant.toggleSunao());
+  }
+  if (DOM.handsfreeToggleBtn) {
+    DOM.handsfreeToggleBtn.addEventListener("click", () => VoiceAssistant.toggleHandsFree());
+  }
+  if (DOM.homeMicBtn) {
+    DOM.homeMicBtn.addEventListener("click", () => VoiceAssistant.startListening(false));
+  }
+  if (DOM.stickyMicBtn) {
+    DOM.stickyMicBtn.addEventListener("click", () => VoiceAssistant.startListening(false));
+  }
+  if (DOM.voiceCancelBtn) {
+    DOM.voiceCancelBtn.addEventListener("click", () => VoiceAssistant.stopListening());
+  }
+  if (DOM.voiceModalBackdrop) {
+    DOM.voiceModalBackdrop.addEventListener("click", () => VoiceAssistant.stopListening());
+  }
+
   // Browser Navigation History (PopState)
   window.addEventListener("popstate", (e) => {
     const url = new URL(window.location.href);
@@ -1217,6 +1311,258 @@ function initRippleEffect() {
 }
 
 // ---------------------------------------------------------------------------
+// Voice Assistant Engine (SpeechSynthesis, SpeechRecognition, Hands-Free)
+// ---------------------------------------------------------------------------
+const VoiceAssistant = {
+  recognition: null,
+  isListening: false,
+  isSpeaking: false,
+  finalTranscript: "",
+
+  init() {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        try { window.speechSynthesis.getVoices(); } catch (e) {}
+      };
+      try { window.speechSynthesis.getVoices(); } catch (e) {}
+    }
+  },
+
+  // --- Speech Synthesis ("Sunao") ---
+  speak(text, onFinished = null) {
+    if (!("speechSynthesis" in window)) {
+      showToast(I18N[STATE.lang].voiceNotSupported);
+      return;
+    }
+
+    if (!text || typeof text !== "string") return;
+
+    // Cancel recognition and current speech
+    this.stopListening();
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Voice selection
+    const voices = window.speechSynthesis.getVoices() || [];
+    let selectedVoice = null;
+
+    if (STATE.lang === "hi" || STATE.lang === "hinglish") {
+      selectedVoice = voices.find(v => v.lang.startsWith("hi")) ||
+                      voices.find(v => v.lang === "en-IN") ||
+                      voices[0];
+    } else {
+      selectedVoice = voices.find(v => v.lang === "en-IN") ||
+                      voices.find(v => v.lang.startsWith("en-")) ||
+                      voices[0];
+    }
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+
+    utterance.onstart = () => {
+      this.isSpeaking = true;
+      STATE.isSpeaking = true;
+      this.updateSunaoUI(true);
+    };
+
+    utterance.onend = () => {
+      this.isSpeaking = false;
+      STATE.isSpeaking = false;
+      this.updateSunaoUI(false);
+      if (typeof onFinished === "function") {
+        onFinished();
+      } else if (STATE.handsFreeMode && !DOM.resultView.hidden) {
+        // Hands-Free Prompt: Prompt user to ask next question!
+        setTimeout(() => {
+          if (STATE.handsFreeMode && !DOM.resultView.hidden) {
+            this.startListening(true);
+          }
+        }, 800);
+      }
+    };
+
+    utterance.onerror = (e) => {
+      console.warn("Speech synthesis error:", e);
+      this.isSpeaking = false;
+      STATE.isSpeaking = false;
+      this.updateSunaoUI(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  },
+
+  stopSpeaking() {
+    if ("speechSynthesis" in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+    this.isSpeaking = false;
+    STATE.isSpeaking = false;
+    this.updateSunaoUI(false);
+  },
+
+  toggleSunao() {
+    if (this.isSpeaking) {
+      this.stopSpeaking();
+    } else {
+      const textToSpeak = STATE.currentData?.speech_text || STATE.currentData?.summary || "";
+      if (textToSpeak) {
+        this.speak(textToSpeak);
+      }
+    }
+  },
+
+  updateSunaoUI(playing) {
+    if (!DOM.sunaoBtn) return;
+    DOM.sunaoBtn.classList.toggle("playing", playing);
+    if (DOM.iconSunaoPlay) DOM.iconSunaoPlay.hidden = playing;
+    if (DOM.iconSunaoStop) DOM.iconSunaoStop.hidden = !playing;
+    if (DOM.audioWaveformBars) DOM.audioWaveformBars.hidden = !playing;
+    const t = I18N[STATE.lang] || I18N.hinglish;
+    if (DOM.uiSunaoBtnText) {
+      DOM.uiSunaoBtnText.textContent = playing ? t.rokoBtn : t.sunaoBtn;
+    }
+  },
+
+  // --- Speech Recognition ("Ask by Voice") ---
+  startListening(isHandsFree = false) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      showToast(I18N[STATE.lang].voiceNotSupported);
+      if (isHandsFree) this.setHandsFree(false);
+      return;
+    }
+
+    this.stopSpeaking();
+
+    if (this.isListening && this.recognition) {
+      try { this.recognition.abort(); } catch (e) {}
+    }
+
+    try {
+      this.recognition = new SpeechRecognition();
+      this.recognition.continuous = false;
+      this.recognition.interimResults = true;
+
+      if (STATE.lang === "hi") {
+        this.recognition.lang = "hi-IN";
+      } else if (STATE.lang === "hinglish") {
+        this.recognition.lang = "hi-IN";
+      } else {
+        this.recognition.lang = "en-IN";
+      }
+
+      this.finalTranscript = "";
+      const t = I18N[STATE.lang] || I18N.hinglish;
+
+      if (DOM.voiceStatusText) DOM.voiceStatusText.textContent = t.listeningTitle;
+      if (DOM.voiceHintText) DOM.voiceHintText.textContent = t.listeningHint;
+      if (DOM.voiceTranscript) DOM.voiceTranscript.textContent = "";
+
+      if (DOM.voiceModal) DOM.voiceModal.hidden = false;
+      if (DOM.voiceModalBackdrop) DOM.voiceModalBackdrop.hidden = false;
+
+      this.recognition.onstart = () => {
+        this.isListening = true;
+        STATE.isListening = true;
+        DOM.homeMicBtn?.classList.add("listening");
+        DOM.stickyMicBtn?.classList.add("listening");
+      };
+
+      this.recognition.onresult = (event) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            this.finalTranscript += event.results[i][0].transcript;
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+        const display = this.finalTranscript || interim;
+        if (DOM.voiceTranscript) DOM.voiceTranscript.textContent = display;
+      };
+
+      this.recognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          showToast(t.voicePermissionDenied);
+        }
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+        STATE.isListening = false;
+        DOM.homeMicBtn?.classList.remove("listening");
+        DOM.stickyMicBtn?.classList.remove("listening");
+        this.closeVoiceModal();
+
+        const cleanTranscript = this.finalTranscript.trim();
+        if (cleanTranscript) {
+          DOM.homeSearchInput.value = cleanTranscript;
+          DOM.stickySearchInput.value = cleanTranscript;
+          fetchExplanation(cleanTranscript);
+        }
+      };
+
+      this.recognition.start();
+    } catch (err) {
+      console.error("SpeechRecognition start error:", err);
+      this.closeVoiceModal();
+      showToast(I18N[STATE.lang].voiceNotSupported);
+    }
+  },
+
+  stopListening() {
+    if (this.recognition && this.isListening) {
+      try { this.recognition.stop(); } catch (e) {}
+    }
+    this.closeVoiceModal();
+  },
+
+  closeVoiceModal() {
+    this.isListening = false;
+    STATE.isListening = false;
+    if (DOM.voiceModal) DOM.voiceModal.hidden = true;
+    if (DOM.voiceModalBackdrop) DOM.voiceModalBackdrop.hidden = true;
+    DOM.homeMicBtn?.classList.remove("listening");
+    DOM.stickyMicBtn?.classList.remove("listening");
+  },
+
+  // --- Hands-Free Conversation Mode ---
+  toggleHandsFree() {
+    this.setHandsFree(!STATE.handsFreeMode);
+  },
+
+  setHandsFree(enabled) {
+    STATE.handsFreeMode = enabled;
+    const t = I18N[STATE.lang] || I18N.hinglish;
+
+    if (DOM.handsfreeToggleBtn) {
+      DOM.handsfreeToggleBtn.classList.toggle("active", enabled);
+      DOM.handsfreeToggleBtn.setAttribute("aria-pressed", enabled ? "true" : "false");
+    }
+
+    if (enabled) {
+      showToast(t.handsfreeOnToast);
+      if (!DOM.resultView.hidden && STATE.currentData) {
+        const text = STATE.currentData.speech_text || STATE.currentData.summary;
+        this.speak(text);
+      } else {
+        this.startListening(true);
+      }
+    } else {
+      showToast(t.handsfreeOffToast);
+      this.stopSpeaking();
+      this.stopListening();
+    }
+  }
+};
+
+// ---------------------------------------------------------------------------
 // App Bootstrapping
 // ---------------------------------------------------------------------------
 function initApp() {
@@ -1227,6 +1573,7 @@ function initApp() {
   initRippleEffect();
   CanvasEngine.init();
   MandalaParallax.init();
+  VoiceAssistant.init();
 
   // Check URL on initial load for shareable link (?q=Ram&lang=hinglish)
   const urlParams = new URLSearchParams(window.location.search);
