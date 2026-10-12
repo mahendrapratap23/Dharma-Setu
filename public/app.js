@@ -267,7 +267,9 @@ const DOM = {
   connectionSvg: document.getElementById("connection-svg"),
   mapEdgesLayer: document.getElementById("map-edges-layer"),
   mapNodesLayer: document.getElementById("map-nodes-layer"),
-  
+
+  cardSources: document.getElementById("card-sources"),
+  cardRealLife: document.getElementById("card-real-life"),
   resSourcesList: document.getElementById("res-sources-list"),
   resRealLife: document.getElementById("res-real-life"),
   cardTraditions: document.getElementById("card-traditions"),
@@ -620,8 +622,8 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
   DOM.cardHero.hidden = true;
   DOM.cardStory.hidden = true;
   DOM.cardConnections.hidden = true;
-  DOM.cardSources.hidden = true;
-  DOM.cardRealLife.hidden = true;
+  if (DOM.cardSources) DOM.cardSources.hidden = true;
+  if (DOM.cardRealLife) DOM.cardRealLife.hidden = true;
   DOM.cardTraditions.hidden = true;
   DOM.cardFollowups.hidden = true;
 
@@ -641,6 +643,8 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
   const preCachedWiki = STATE.wikiCache.get(wikiCacheKey);
 
   // Fire /api/wiki and /api/explain IN PARALLEL
+  // wiki_context is sent if already cached; the Worker also auto-fetches wiki
+  // server-side as a fallback, so grounding is guaranteed either way.
   const wikiPromise = fetchWikiData(trimmed, STATE.lang);
 
   const explainPayload = {
@@ -651,6 +655,7 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
     explainPayload.context = context;
   }
   if (preCachedWiki && preCachedWiki.found) {
+    // Pass cached wiki context for immediate grounding
     explainPayload.wiki_context = {
       title: preCachedWiki.title,
       extract: preCachedWiki.extract
@@ -665,9 +670,15 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
     body: JSON.stringify(explainPayload)
   });
 
-  // Track Wikipedia resolution as soon as it arrives!
+  // Track the resolved wiki data in the closure for post-AI type update
+  let resolvedWikiData = null;
+
+  // Render Wikipedia card as soon as it arrives (before AI may finish)
   wikiPromise.then((wikiData) => {
+    resolvedWikiData = wikiData;
     if (STATE.currentQuery === trimmed) {
+      // Use AI type if already available, otherwise render with null type
+      // (will be corrected below when AI resolves)
       renderWikiCard(wikiData, STATE.currentData?.type);
     }
   }).catch((err) => {
@@ -697,9 +708,12 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
     // Render full AI response below the Wikipedia card
     renderResult(data);
 
-    // Re-verify Wikipedia image with official data.type
-    if (STATE.currentWikiData) {
-      updateWikiMedia(STATE.currentWikiData, data.type);
+    // Re-apply image/mandala rule now that we have the official topic type.
+    // Covers both: wiki arrived before AI (resolvedWikiData set) and
+    // wiki arrived after AI (STATE.currentWikiData set by renderWikiCard).
+    const wikiForTypeUpdate = resolvedWikiData || STATE.currentWikiData;
+    if (wikiForTypeUpdate) {
+      updateWikiMedia(wikiForTypeUpdate, data.type);
     }
   } catch (err) {
     console.error("Error fetching explanation:", err);
@@ -813,17 +827,17 @@ function renderResult(data) {
       li.textContent = src;
       DOM.resSourcesList.appendChild(li);
     });
-    document.getElementById("card-sources").hidden = false;
+    if (DOM.cardSources) DOM.cardSources.hidden = false;
   } else {
-    document.getElementById("card-sources").hidden = true;
+    if (DOM.cardSources) DOM.cardSources.hidden = true;
   }
 
   // 5. Real Life
   if (data.real_life && data.real_life.trim()) {
     DOM.resRealLife.textContent = data.real_life;
-    document.getElementById("card-real-life").hidden = false;
+    if (DOM.cardRealLife) DOM.cardRealLife.hidden = false;
   } else {
-    document.getElementById("card-real-life").hidden = true;
+    if (DOM.cardRealLife) DOM.cardRealLife.hidden = true;
   }
 
   // 6. Traditions Differ
