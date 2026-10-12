@@ -1,6 +1,11 @@
 /**
- * Dharma Setu (धर्म सेतु) — Mobile-First Client Application
- * Plain Vanilla JS, zero build step, zero external libraries.
+ * Dharma Setu (धर्म सेतु) — Client Application Logic
+ * Implements the Serene Vedic Warmth design system and Stitch UI flows:
+ * - Minimal Home Screen (Screen 1)
+ * - Profile & Search Result with Milestone Tabs & Lightbox (Screen 2)
+ * - Interactive Orbit Connection Graph (Screen 3)
+ * - "Kab, kyun aur kaise" Timeline Stream (Screen 4)
+ * - Voice Narration ("Sunao"), Speech Recognition, Hands-Free Mode, and Bookmarks
  */
 
 // ---------------------------------------------------------------------------
@@ -9,18 +14,21 @@
 const I18N = {
   hinglish: {
     tagline: "धर्म सेतु",
-    homeHeading: "Sanatana Gyan, Shastra Pramaan",
-    homeDesc: "Granthon ke aadhar par pramanik uttar, kathaayein aur sambandh.",
-    searchPlaceholder: "Poochhein: Ram, Krishna, Ekadashi...",
+    homeHeading: "धर्म सेतु",
+    homeDesc: "Sanatana Gyan, Shastra Pramaan",
+    searchPlaceholder: "Ram, Krishna, Draupadi, Ekadashi...",
     searchBtn: "Khojein",
     examplesLabel: "Udaharan:",
     recentTitle: "Haal hi mein dekha gaya",
     clearRecent: "Saaf karein",
+    tabProfile: "Parichay",
+    tabGraph: "Sambandh",
+    tabTimeline: "Timeline",
     storyTitle: "Katha vistar",
-    mapTitle: "Sambandh Naksha",
-    mapSubtitle: "Kisi bhi vishay par tap karke sambandh jaanein",
-    sourcesTitle: "Granthon mein (Pramaan)",
-    realLifeTitle: "Real life mein (Parampara aur Manyata)",
+    mapTitle: "Kaun kaun juda hai",
+    mapSubtitle: "se jude log, ghatnayein aur pavitra granth",
+    sourcesTitle: "Granthon mein",
+    realLifeTitle: "Real life mein",
     traditionsTitle: "Paramparaon mein bhed",
     followupsTitle: "Aage ke sawal",
     shareBtn: "Share karein",
@@ -34,44 +42,46 @@ const I18N = {
     retryBtn: "Phir se try karein",
     errorTitle: "Kripya kshama karein",
     errorMsg: "Jawab laane mein thodi der ho rahi hai. Kripya punah prayas karein.",
-    sheetRel: "Sambandh:",
-    sheetSource: "Shastra Pramaan:",
-    sheetExplore: "Iske bare mein jaanein",
+    sheetExplore: "Inka sambandh padhein",
     toastCopied: "Link clipboard par copy ho gaya!",
     toastSummaryCopied: "Jawab copy ho gaya!",
+    toastBookmarkAdded: "Sambandh bookmark ho gaya!",
+    toastBookmarkRemoved: "Bookmark hata diya gaya.",
     sunaoBtn: "Sunao",
     rokoBtn: "Roko",
     handsfreeLabel: "Hands-Free",
     handsfreeOnToast: "Hands-free mode shuru! Jawab sunne ke baad agla sawal bolein.",
     handsfreeOffToast: "Hands-free mode band.",
     listeningTitle: "Sun raha hoon...",
-    listeningHint: "Poochhein: 'Krishna kaun hain?', 'Ekadashi katha'...",
+    listeningHint: "Poochhein: 'Krishna kaun hain?', 'Draupadi katha'...",
     voiceCancel: "Band karein",
     voiceNotSupported: "Aapke browser mein aawaz suvidha uplabdh nahi hai.",
     voicePermissionDenied: "Microphone permission allow karein.",
-    wikiSourceLabel: "Wikipedia ke anusaar",
-    aiSourceLabel: "Dharma Setu AI",
-    readMoreWiki: "Wikipedia par vistar se padhein",
+    wikiSourceLabel: "Image: Wikimedia Commons",
+    readMoreWiki: "Wikipedia par padhein",
     loadingPhrases: [
       "Shastron se pramanik khoj jaari hai...",
       "Granthon ke sandarbh jode ja rahe hain...",
-      "Puranon aur Itihas se katha vistar ban raha hai..."
+      "Puranon aur Itihas se sambandh ban rahe hain..."
     ]
   },
   hi: {
     tagline: "सनातन ज्ञान सेतु",
-    homeHeading: "सनातन ज्ञान, शास्त्र प्रमाण",
-    homeDesc: "ग्रंथों के आधार पर प्रामाणिक उत्तर, कथाएं और संबंध।",
-    searchPlaceholder: "पूछें: राम, कृष्ण, एकादशी...",
+    homeHeading: "धर्म सेतु",
+    homeDesc: "सनातन ज्ञान, शास्त्र प्रमाण",
+    searchPlaceholder: "राम, कृष्ण, द्रौपदी, एकादशी...",
     searchBtn: "खोजें",
     examplesLabel: "उदाहरण:",
     recentTitle: "हाल ही में देखा गया",
     clearRecent: "साफ करें",
+    tabProfile: "परिचय",
+    tabGraph: "संबंध",
+    tabTimeline: "टाइमलाइन",
     storyTitle: "कथा विस्तार",
-    mapTitle: "संबंध नक्शा",
-    mapSubtitle: "किसी भी विषय पर टैप करके संबंध जानें",
-    sourcesTitle: "ग्रंथों में (प्रमाण)",
-    realLifeTitle: "दैनिक जीवन में (परंपरा व मान्यता)",
+    mapTitle: "कौन-कौन जुड़ा है",
+    mapSubtitle: "से जुड़े पात्र, घटनाएं और पवित्र ग्रंथ",
+    sourcesTitle: "ग्रंथों में",
+    realLifeTitle: "दैनिक जीवन में",
     traditionsTitle: "परंपराओं में भेद",
     followupsTitle: "आगे के प्रश्न",
     shareBtn: "साझा करें",
@@ -79,81 +89,82 @@ const I18N = {
     lowConfNotice: "इस उत्तर को शास्त्रों से स्वयं सत्यापित करें।",
     footerDisclaimer: "उत्तर AI द्वारा जनरेटेड हैं, ग्रंथों से पुष्टि करें।",
     feedbackLink: "त्रुटि बताएं",
-    backText: "पिछला विषय:",
+    backText: "पिछला:",
     interpretedLabel: "मैंने समझा:",
     didYouMeanLabel: "क्या आपका तात्पर्य था:",
     retryBtn: "पुनः प्रयास करें",
     errorTitle: "कृपया क्षमा करें",
     errorMsg: "उत्तर प्राप्त करने में समय लग रहा है। कृपया पुनः प्रयास करें।",
-    sheetRel: "संबंध:",
-    sheetSource: "शास्त्र प्रमाण:",
-    sheetExplore: "इसके बारे में जानें",
+    sheetExplore: "इनका संबंध पढ़ें",
     toastCopied: "लिंक कॉपी हो गया!",
     toastSummaryCopied: "उत्तर कॉपी हो गया!",
+    toastBookmarkAdded: "संबंध बुकमार्क में सहेजा गया!",
+    toastBookmarkRemoved: "बुकमार्क हटाया गया।",
     sunaoBtn: "सुनें",
     rokoBtn: "रोकें",
     handsfreeLabel: "हैंड्स-फ्री",
     handsfreeOnToast: "हैंड्स-फ्री मोड सक्रिय! उत्तर सुनने के बाद अगला प्रश्न बोलें।",
     handsfreeOffToast: "हैंड्स-फ्री मोड बंद।",
     listeningTitle: "सुन रहा हूँ...",
-    listeningHint: "पूछें: 'कृष्ण कौन हैं?', 'एकादशी माहात्म्य'...",
+    listeningHint: "पूछें: 'कृष्ण कौन हैं?', 'द्रौपदी कथा'...",
     voiceCancel: "बंद करें",
     voiceNotSupported: "आपके ब्राउज़र में आवाज़ सुविधा उपलब्ध नहीं है।",
     voicePermissionDenied: "कृपया माइक्रोफ़ोन की अनुमति दें।",
-    wikiSourceLabel: "विकिपीडिया के अनुसार",
-    aiSourceLabel: "धर्म सेतु AI",
-    readMoreWiki: "विकिपीडिया पर विस्तार से पढ़ें",
+    wikiSourceLabel: "चित्र: विकिमीडिया कॉमन्स",
+    readMoreWiki: "विकिपीडिया पर पढ़ें",
     loadingPhrases: [
       "शास्त्रों से प्रामाणिक खोज जारी है...",
       "ग्रंथों के संदर्भ जोड़े जा रहे हैं...",
-      "पुराणों और इतिहास से कथा विस्तार बन रहा है..."
+      "पुराणों और इतिहास से संबंध बन रहे हैं..."
     ]
   },
   en: {
     tagline: "Bridge to Dharma",
-    homeHeading: "Timeless Wisdom, Scriptural Evidence",
-    homeDesc: "Authentic answers, narratives, and connection maps grounded in Hindu scriptures.",
-    searchPlaceholder: "Ask: Ram, Krishna, Ekadashi...",
+    homeHeading: "Dharma Setu",
+    homeDesc: "Timeless Wisdom, Scriptural Evidence",
+    searchPlaceholder: "Ram, Krishna, Draupadi, Ekadashi...",
     searchBtn: "Search",
     examplesLabel: "Examples:",
     recentTitle: "Recent Searches",
     clearRecent: "Clear",
+    tabProfile: "Profile",
+    tabGraph: "Connections",
+    tabTimeline: "Timeline",
     storyTitle: "Detailed Narrative",
-    mapTitle: "Connection Map",
-    mapSubtitle: "Tap any connected node to explore relationships",
-    sourcesTitle: "Scriptural Sources",
-    realLifeTitle: "In Daily Life (Tradition & Practice)",
+    mapTitle: "Who is Connected",
+    mapSubtitle: "related people, scriptures, and events",
+    sourcesTitle: "In Scriptures",
+    realLifeTitle: "In Daily Life",
     traditionsTitle: "Where Traditions Differ",
     followupsTitle: "Follow-up Questions",
     shareBtn: "Share",
     copyBtn: "Copy",
-    lowConfNotice: "Please independently verify this answer with authentic scriptures.",
+    lowConfNotice: "Please verify this answer with authentic scriptures.",
     footerDisclaimer: "Answers are AI-generated, verify with authentic scriptures.",
-    feedbackLink: "Report an issue",
+    feedbackLink: "Report issue",
     backText: "Back to:",
     interpretedLabel: "Interpreted as:",
     didYouMeanLabel: "Did you mean:",
     retryBtn: "Retry",
     errorTitle: "We apologize",
     errorMsg: "The server is currently busy or taking longer than expected. Please try again.",
-    sheetRel: "Relationship:",
-    sheetSource: "Scriptural Citation:",
-    sheetExplore: "Explore this topic",
+    sheetExplore: "Explore Connection",
     toastCopied: "Link copied to clipboard!",
     toastSummaryCopied: "Summary copied to clipboard!",
+    toastBookmarkAdded: "Connection saved to bookmarks!",
+    toastBookmarkRemoved: "Bookmark removed.",
     sunaoBtn: "Listen",
     rokoBtn: "Stop",
     handsfreeLabel: "Hands-Free",
     handsfreeOnToast: "Hands-free mode active! Speak next question after answer.",
     handsfreeOffToast: "Hands-free mode disabled.",
     listeningTitle: "Listening...",
-    listeningHint: "Ask: 'Who is Krishna?', 'Why fast on Ekadashi?'...",
+    listeningHint: "Ask: 'Who is Krishna?', 'Draupadi story'...",
     voiceCancel: "Cancel",
     voiceNotSupported: "Voice recognition is not supported in this browser.",
     voicePermissionDenied: "Please allow microphone permission.",
-    wikiSourceLabel: "According to Wikipedia",
-    aiSourceLabel: "Dharma Setu AI",
-    readMoreWiki: "Read more on Wikipedia",
+    wikiSourceLabel: "Image: Wikimedia Commons",
+    readMoreWiki: "Read on Wikipedia",
     loadingPhrases: [
       "Searching authentic scriptures...",
       "Tracing connections and references...",
@@ -163,41 +174,223 @@ const I18N = {
 };
 
 // ---------------------------------------------------------------------------
+// Curated Draupadi Showcase Data (Stitch UI screens 2, 3, and 4)
+// ---------------------------------------------------------------------------
+const CURATED_DRAUPADI_DATA = {
+  title: "Draupadi",
+  devanagari: "(द्रौपदी)",
+  type: "person",
+  typeLabel: "Vyakti",
+  summary: "Draupadi is the central heroine of the Mahabharata, born from the sacred yajna fire and known for her strength, wisdom, and steadfast dedication to dharma across complex trials.",
+  story: [
+    {
+      tab: "Janm",
+      text: "Raja Drupada ne Putrakameshti Yajna kiya tha, jiske pavitra agnikund se Draupadi prakat huin. Unka janm dharma aur nyaya ki sthapna ke uddeshya se hua tha."
+    },
+    {
+      tab: "Vivah",
+      text: "Arjun dwara matsyayantra bhedne ke uprant Mata Kunti ke anjane vachan aur Vedavyasa ke aashirvad se Draupadi ka vivah paancho Pandavo ke sath sampanna hua."
+    },
+    {
+      tab: "Sabha Parv",
+      text: "Dyuta Sabha mein Dushasana dwara cheer haran ke dushprayas par Draupadi ne sabha ke varishthon se naitik sawal kiye aur ananya sharanagati se Govinda ko pukara, jahan Shri Krishna ne akshaya cheer pradan kar maryada ki raksha ki."
+    },
+    {
+      tab: "Seekh",
+      text: "Draupadi ka charitra stree-shakti, aatm-samman, aur vipatti mein adharm ke viruddh aawaz uthane ka prateek hai. Unka jeevan shikhata hai ki chup rehna adharma ko badhava deta hai."
+    }
+  ],
+  sources: [
+    "Mahabharata: Adi Parva aur Sabha Parva",
+    "Srimad Bhagavatam: Skandha 1, Adhyaya 7",
+    "Kashiram Dasi Parva: Vana Parva ke prasang"
+  ],
+  real_life: "Draupadi atmasamman aur annyay ke viruddh aawaz uthane ki prateek hain. Unka jeevan sikhata hai ki kathin paristhitiyon mein bhi sach aur naitikta par kayam rehna chahiye.",
+  traditions_differ: "Dakshin Bharat aur Lok-parampara mein Draupadi ko shakti ka avatar manakar 'Draupadi Amman' ke roop mein pooja jaata hai, jabki Sanskrit itihas mein unhe yajna-sambhuta naitik nayika ke roop mein sthapit kiya gaya hai.",
+  connections: {
+    krishna: {
+      id: "krishna",
+      name: "Krishna",
+      devanagari: "(श्रीकृष्ण)",
+      type: "person",
+      relation: "Sakha aur rakshak",
+      icon: "spa",
+      desc: "Govinda answered her silent prayer during Sabha Parva; their bond transcended mortal friendship as divine protector (Sakha) honoring absolute surrender (Sharanagati).",
+      citation: "Mahabharat, Sabha Parva (Shloka 68)"
+    },
+    arjun: {
+      id: "arjun",
+      name: "Arjun",
+      devanagari: "(अर्जुन)",
+      type: "person",
+      relation: "Pati aur dhanurdhar",
+      icon: "sports_martial_arts",
+      desc: "Won Draupadi's hand at the grand Matsya Vedha svayamvara through peerless skill; shared deep spiritual alignment during their twelve years of vanavasa.",
+      citation: "Mahabharat, Adi Parva (Adhyaya 187)"
+    },
+    mahabharat: {
+      id: "mahabharat",
+      name: "Mahabharat",
+      devanagari: "(महाभारतम्)",
+      type: "scripture",
+      relation: "Pavitra granth",
+      icon: "menu_book",
+      desc: "Veda Vyasa's itihasa where Draupadi acts as the moral axis and unyielding catalyst of cosmic justice, upholding Dharma against institutional silence.",
+      citation: "Mahabharat, Samasta 18 Parva"
+    },
+    kurusabha: {
+      id: "kurusabha",
+      name: "Kuru Sabha",
+      devanagari: "(कुरु सभा)",
+      type: "event",
+      relation: "Cheer haran ghatna",
+      icon: "gavel",
+      desc: "The assembly where Draupadi interrogated the wisest elders on legality and righteousness, exposing moral decay before Krishna shielded her honor.",
+      citation: "Mahabharat, Sabha Parva (Adhyaya 67-69)"
+    },
+    kurukshetra: {
+      id: "kurukshetra",
+      name: "Kurukshetra",
+      devanagari: "(कुरुक्षेत्र)",
+      type: "place",
+      relation: "Yuddha sankalp kshetra",
+      icon: "flag",
+      desc: "The sacred battleground where the solemn vow regarding Draupadi's open hair was fulfilled through the defeat of adharma.",
+      citation: "Mahabharat, Bhishma Parva (Adhyaya 1)"
+    },
+    bhima: {
+      id: "bhima",
+      name: "Bhima",
+      devanagari: "(भीमसेन)",
+      type: "person",
+      relation: "Rakshak aur gadadhar",
+      icon: "fitness_center",
+      desc: "Her fierce protector who vowed to defeat Dushasana and Duryodhana, fulfilling every promise made to restore her dignity during their exile.",
+      citation: "Mahabharat, Sabha Parva (Adhyaya 71)"
+    },
+    pandavas: {
+      id: "pandavas",
+      name: "Pandavas",
+      devanagari: "(पाण्डव)",
+      type: "person",
+      relation: "Panchali parivar",
+      icon: "groups",
+      desc: "United in sacred duty under Kunti's maternal direction; Draupadi governed the royal household at Indraprastha with exceptional wisdom.",
+      citation: "Mahabharat, Adi Parva (Adhyaya 190)"
+    },
+    yudhishthir: {
+      id: "yudhishthir",
+      name: "Yudhishthir",
+      devanagari: "(युधिष्ठिर)",
+      type: "person",
+      relation: "Jyeshtha pati (Dharmaraj)",
+      icon: "balance",
+      desc: "The righteous king whose devotion to abstract truth was examined and respected by Draupadi through deep philosophical discourses.",
+      citation: "Mahabharat, Vana Parva (Adhyaya 32)"
+    }
+  },
+  timeline: [
+    {
+      phase: "pehle",
+      era: "Dwapar Yug",
+      parva: "Adi Parva",
+      title: "Yajna se divya janm",
+      text: "Maharaj Drupada ke Putrakameshti Yajna ki pavitra agni se Draupadi ka divya aavirbhav hua.",
+      kyun_hua: null
+    },
+    {
+      phase: "pehle",
+      era: "Dwapar Yug",
+      parva: "Adi Parva",
+      title: "Matsya vedha aur vivah",
+      text: "Arjun dwara matsyayantra bhedne ke uprant Kunti ke vachan se paancho Pandavo se vivah sampanna hua.",
+      kyun_hua: null
+    },
+    {
+      phase: "is_kahani_mein",
+      era: "Dyuta Sabha",
+      parva: "Sabha Parva",
+      title: "Dyuta krida (Chausar ka khel)",
+      text: "Shakuni ke kootneeti purna paanso se Yudhishthira ne rajya sahit Draupadi ko daav par lagakar haar diya.",
+      kyun_hua: "Duryodhana ki irshya aur Shakuni ke chhal ke karan Pandavo ko Hastinapur bulaakar aamantrit kiya gaya tha."
+    },
+    {
+      phase: "is_kahani_mein",
+      era: "Kuru Sabha",
+      parva: "Sabha Parva",
+      title: "Cheer haran aur Govinda ki sharan",
+      text: "Dushasana ke dushprayas par Draupadi ne ananya sharanagati se Shri Krishna ko pukara aur maryada ki raksha hui.",
+      kyun_hua: "Sabha ke varishthon ke maun ke beech Draupadi ne aatm-samman aur dharmik nayay ka aahvan kiya."
+    },
+    {
+      phase: "baad_mein",
+      era: "Kamyaka Van",
+      parva: "Vana Parva",
+      title: "12 varsh vanvaas aur agyatvaas",
+      text: "Pandavo sang vanvaas aur Matsya desh mein Sairandhri ke roop mein kathin samay vyateet kiya.",
+      kyun_hua: null
+    },
+    {
+      phase: "baad_mein",
+      era: "Kurukshetra",
+      parva: "Yuddha Parva",
+      title: "Maha-sangram aur adharma ka ant",
+      text: "18 dino ke Kurukshetra yuddha ke sath adharma ka vinash hua aur pratijna purna hui.",
+      kyun_hua: null
+    },
+    {
+      phase: "parampara",
+      era: "Aaj ki parampara",
+      parva: "Living Tradition",
+      title: "Draupadi Amman Utsav & Cheer Haran Leela",
+      text: "Dakshin Bharat mein har saal Draupadi Amman festival aur Fire-walking (Theemithi) parampara manayi jaati hai, jo stree-shakti aur satya ki vijay ka prateek hai.",
+      cta: "Parampara ke baare mein vistar se jaanein"
+    }
+  ]
+};
+
+// ---------------------------------------------------------------------------
 // Application State
 // ---------------------------------------------------------------------------
 const STATE = {
   lang: localStorage.getItem("dharmasetu_lang") || "hinglish",
-  theme: localStorage.getItem("dharmasetu_theme") || "dark",
+  theme: localStorage.getItem("dharmasetu_theme") || "light",
   currentQuery: "",
   currentData: null,
-  topicHistory: [], // Breadcrumb stack: [{ q, title }]
-  recentSearches: JSON.parse(localStorage.getItem("dharmasetu_recent") || "[]"),
-  loadingTimer: null,
+  currentWikiData: null,
   activeStoryTab: 0,
-  activeSheetNode: null,
+  activeView: "profile", // 'profile' | 'graph' | 'timeline'
+  activeGraphFilter: "all",
+  activeGraphNode: null,
+  graphZoom: 1.0,
+  topicHistory: [],
+  recentSearches: JSON.parse(localStorage.getItem("dharmasetu_recent") || "[]"),
+  bookmarks: JSON.parse(localStorage.getItem("dharmasetu_bookmarks") || "[]"),
   handsFreeMode: false,
   isSpeaking: false,
   isListening: false,
-  wikiCache: new Map(),
-  currentWikiData: null
+  loadingTimer: null,
+  wikiCache: new Map()
 };
 
 // ---------------------------------------------------------------------------
-// DOM Elements
+// DOM Elements Registry
 // ---------------------------------------------------------------------------
 const DOM = {
   html: document.documentElement,
   brandHomeBtn: document.getElementById("brand-home-btn"),
   themeToggleBtn: document.getElementById("theme-toggle-btn"),
+  headerBookmarksBtn: document.getElementById("header-bookmarks-btn"),
+  bookmarkBadge: document.getElementById("bookmark-badge"),
   langBtns: document.querySelectorAll(".lang-btn"),
-  
+
   // Views
   homeView: document.getElementById("home-view"),
   loadingView: document.getElementById("loading-view"),
   errorView: document.getElementById("error-view"),
   resultView: document.getElementById("result-view"),
-  
-  // Home elements
+
+  // Home Elements
   homeSearchForm: document.getElementById("home-search-form"),
   homeSearchInput: document.getElementById("home-search-input"),
   homeClearBtn: document.getElementById("home-clear-btn"),
@@ -206,50 +399,59 @@ const DOM = {
   recentSearchesBox: document.getElementById("recent-searches-box"),
   recentChips: document.getElementById("recent-chips"),
   clearRecentBtn: document.getElementById("clear-recent-btn"),
-  
-  // Loading & Error elements
+
+  // Loading & Error Elements
   loadingPhrase: document.getElementById("loading-phrase"),
   retryBtn: document.getElementById("retry-btn"),
-  errorMessage: document.getElementById("error-message"),
   errorTitle: document.getElementById("error-title"),
-  
-  // Result elements
+  errorMessage: document.getElementById("error-message"),
+
+  // Result Header & View Switcher
+  resultBackBtn: document.getElementById("result-back-btn"),
+  resultSearchQueryText: document.getElementById("result-search-query-text"),
+  resultSearchClearBtn: document.getElementById("result-search-clear-btn"),
+  sunaoQuickBtn: document.getElementById("sunao-quick-btn"),
+  sunaoQuickIcon: document.getElementById("sunao-quick-icon"),
+  viewTabBtns: document.querySelectorAll(".view-tab-btn"),
+  viewTabProfile: document.getElementById("view-tab-profile"),
+  viewTabGraph: document.getElementById("view-tab-graph"),
+  viewTabTimeline: document.getElementById("view-tab-timeline"),
+
+  // Breadcrumbs & Misspelling Box
   breadcrumbBar: document.getElementById("breadcrumb-bar"),
   breadcrumbBackBtn: document.getElementById("breadcrumb-back-btn"),
   breadcrumbBackText: document.getElementById("breadcrumb-back-text"),
   breadcrumbPrevTopic: document.getElementById("breadcrumb-prev-topic"),
-  
   resInterpretedBox: document.getElementById("res-interpreted-box"),
   resInterpretedAs: document.getElementById("res-interpreted-as"),
   resDidYouMeanBox: document.getElementById("res-did-you-mean-box"),
   resDidYouMeanChips: document.getElementById("res-did-you-mean-chips"),
 
-  // Wikipedia Card & Grounding Elements
+  // Portrait Photo & Media Card (Screen 2)
   cardWiki: document.getElementById("card-wiki"),
   cardWikiSkeleton: document.getElementById("card-wiki-skeleton"),
-  uiWikiSourceLabel: document.getElementById("ui-wiki-source-label"),
-  wikiLangPill: document.getElementById("wiki-lang-pill"),
-  wikiMediaWrap: document.getElementById("wiki-media-wrap"),
   wikiImageBox: document.getElementById("wiki-image-box"),
   wikiThumbImg: document.getElementById("wiki-thumb-img"),
   wikiMandalaPlaceholder: document.getElementById("wiki-mandala-placeholder"),
   wikiZoomBadge: document.getElementById("wiki-zoom-badge"),
-  wikiTitle: document.getElementById("wiki-title"),
-  wikiExtract: document.getElementById("wiki-extract"),
+  wikiPhotoCaption: document.getElementById("wiki-photo-caption"),
   wikiReadLink: document.getElementById("wiki-read-link"),
   uiWikiReadMore: document.getElementById("ui-wiki-read-more"),
 
-  // Dharma Setu AI Header & Skeletons
+  // Profile Card & Story Tabs (Screen 2)
   cardAiSkeleton: document.getElementById("card-ai-skeleton"),
   cardHero: document.getElementById("card-hero"),
-  uiAiSourceLabel: document.getElementById("ui-ai-source-label"),
-
-  resTitle: document.getElementById("res-title"),
+  resTitleMain: document.getElementById("res-title-main"),
+  resTitleDevanagari: document.getElementById("res-title-devanagari"),
   resTypeBadge: document.getElementById("res-type-badge"),
   resSummary: document.getElementById("res-summary"),
+  cardStory: document.getElementById("card-story"),
+  storyTabsNav: document.getElementById("story-tabs-nav"),
+  storyTabContent: document.getElementById("story-tab-content"),
   resLowConfidence: document.getElementById("res-low-confidence"),
 
-  // Audio Control Bar (Phase C: Sunao & Hands-Free)
+  // Audio Control Bar (Sunao & Hands-Free)
+  audioControlBar: document.getElementById("audio-control-bar"),
   sunaoBtn: document.getElementById("sunao-btn"),
   uiSunaoBtnText: document.getElementById("ui-sunao-btn-text"),
   iconSunaoPlay: document.getElementById("icon-sunao-play"),
@@ -258,35 +460,56 @@ const DOM = {
   handsfreeToggleBtn: document.getElementById("handsfree-toggle-btn"),
   uiHandsfreeText: document.getElementById("ui-handsfree-text"),
   handsfreeStatusDot: document.getElementById("handsfree-status-dot"),
-  
-  cardStory: document.getElementById("card-story"),
-  storyTabsNav: document.getElementById("story-tabs-nav"),
-  storyTabContent: document.getElementById("story-tab-content"),
-  
-  cardConnections: document.getElementById("card-connections"),
-  connectionSvg: document.getElementById("connection-svg"),
-  mapEdgesLayer: document.getElementById("map-edges-layer"),
-  mapNodesLayer: document.getElementById("map-nodes-layer"),
 
+  // Profile Cards
   cardSources: document.getElementById("card-sources"),
-  cardRealLife: document.getElementById("card-real-life"),
   resSourcesList: document.getElementById("res-sources-list"),
+  cardRealLife: document.getElementById("card-real-life"),
   resRealLife: document.getElementById("res-real-life"),
   cardTraditions: document.getElementById("card-traditions"),
   resTraditions: document.getElementById("res-traditions"),
+  jumpToGraphBtn: document.getElementById("jump-to-graph-btn"),
+  jumpToTimelineBtn: document.getElementById("jump-to-timeline-btn"),
   cardFollowups: document.getElementById("card-followups"),
   resFollowupsList: document.getElementById("res-followups-list"),
-  
   shareBtn: document.getElementById("share-btn"),
   copySummaryBtn: document.getElementById("copy-summary-btn"),
-  
-  // Sticky bottom search
+
+  // Connection Graph View (Screen 3)
+  graphSubtitle: document.getElementById("graph-subtitle"),
+  graphFilterBar: document.getElementById("graph-filter-bar"),
+  graphViewport: document.getElementById("graph-viewport"),
+  connectionSvg: document.getElementById("connection-svg"),
+  mapEdgesLayer: document.getElementById("map-edges-layer"),
+  graphCenterNode: document.getElementById("graph-center-node"),
+  graphCenterTitle: document.getElementById("graph-center-title"),
+  graphCenterDevanagari: document.getElementById("graph-center-devanagari"),
+  mapNodesLayer: document.getElementById("map-nodes-layer"),
+  graphZoomInBtn: document.getElementById("graph-zoom-in-btn"),
+  graphZoomOutBtn: document.getElementById("graph-zoom-out-btn"),
+
+  // Connection Bottom Card (Screen 3)
+  connectionBottomCard: document.getElementById("connection-bottom-card"),
+  cardIcon: document.getElementById("card-icon"),
+  cardTitle: document.getElementById("card-title"),
+  cardRelation: document.getElementById("card-relation"),
+  cardDescription: document.getElementById("card-description"),
+  cardCitation: document.getElementById("card-citation"),
+  cardExploreBtn: document.getElementById("card-explore-btn"),
+  cardBookmarkBtn: document.getElementById("card-bookmark-btn"),
+  cardBookmarkIcon: document.getElementById("card-bookmark-icon"),
+
+  // Timeline View (Screen 4)
+  timelineStreamContainer: document.getElementById("timeline-stream-container"),
+  timelineEventsContent: document.getElementById("timeline-events-content"),
+
+  // Sticky Bottom Search
   stickyBottomBar: document.getElementById("sticky-bottom-bar"),
   stickySearchForm: document.getElementById("sticky-search-form"),
   stickySearchInput: document.getElementById("sticky-search-input"),
   stickyMicBtn: document.getElementById("sticky-mic-btn"),
-  
-  // Bottom Sheet
+
+  // Modals & Drawers
   bottomSheetBackdrop: document.getElementById("bottom-sheet-backdrop"),
   nodeBottomSheet: document.getElementById("node-bottom-sheet"),
   sheetNodeName: document.getElementById("sheet-node-name"),
@@ -295,36 +518,36 @@ const DOM = {
   sheetNodeSource: document.getElementById("sheet-node-source"),
   sheetExploreBtn: document.getElementById("sheet-explore-btn"),
   sheetCloseBtn: document.getElementById("sheet-close-btn"),
-  
-  // Voice Modal Overlay
+
   voiceModalBackdrop: document.getElementById("voice-modal-backdrop"),
   voiceModal: document.getElementById("voice-modal"),
   voiceStatusText: document.getElementById("voice-status-text"),
   voiceHintText: document.getElementById("voice-hint-text"),
   voiceTranscript: document.getElementById("voice-transcript"),
   voiceCancelBtn: document.getElementById("voice-cancel-btn"),
-  uiVoiceCancelText: document.getElementById("ui-voice-cancel-text"),
 
-  // Toast
-  toastPopup: document.getElementById("toast-popup"),
-  
-  // Lightbox Modal
   lightboxModal: document.getElementById("lightbox-modal"),
   lightboxBackdrop: document.getElementById("lightbox-backdrop"),
   lightboxCloseBtn: document.getElementById("lightbox-close-btn"),
   lightboxImg: document.getElementById("lightbox-img"),
   lightboxCaption: document.getElementById("lightbox-caption"),
 
-  // Dynamic UI labels
+  bookmarksBackdrop: document.getElementById("bookmarks-backdrop"),
+  bookmarksDrawer: document.getElementById("bookmarks-drawer"),
+  bookmarksCloseBtn: document.getElementById("bookmarks-close-btn"),
+  bookmarksList: document.getElementById("bookmarks-list"),
+  bookmarksEmptyNotice: document.getElementById("bookmarks-empty-notice"),
+
+  toastPopup: document.getElementById("toast-popup"),
+
+  // I18N Labels
   uiTagline: document.getElementById("ui-tagline"),
   uiHomeHeading: document.getElementById("ui-home-heading"),
   uiHomeDesc: document.getElementById("ui-home-desc"),
-  uiSearchBtnText: document.getElementById("ui-search-btn-text"),
   uiExamplesLabel: document.getElementById("ui-examples-label"),
   uiRecentTitle: document.getElementById("ui-recent-title"),
-  uiStoryTitle: document.getElementById("ui-story-title"),
-  uiMapTitle: document.getElementById("ui-map-title"),
-  uiMapSubtitle: document.getElementById("ui-map-subtitle"),
+  uiInterpretedLabel: document.getElementById("ui-interpreted-label"),
+  uiDidYouMeanLabel: document.getElementById("ui-did-you-mean-label"),
   uiSourcesTitle: document.getElementById("ui-sources-title"),
   uiReallifeTitle: document.getElementById("ui-reallife-title"),
   uiTraditionsTitle: document.getElementById("ui-traditions-title"),
@@ -335,15 +558,11 @@ const DOM = {
   uiFooterDisclaimer: document.getElementById("ui-footer-disclaimer"),
   uiFeedbackLink: document.getElementById("ui-feedback-link"),
   uiRetryBtnText: document.getElementById("ui-retry-btn-text"),
-  uiSheetRelLabel: document.getElementById("ui-sheet-rel-label"),
-  uiSheetSourceLabel: document.getElementById("ui-sheet-source-label"),
-  uiSheetExploreText: document.getElementById("ui-sheet-explore-text"),
-  uiInterpretedLabel: document.getElementById("ui-interpreted-label"),
-  uiDidYouMeanLabel: document.getElementById("ui-did-you-mean-label")
+  uiVoiceCancelText: document.getElementById("ui-voice-cancel-text")
 };
 
 // ---------------------------------------------------------------------------
-// Theme & Language Initialization
+// Theme & Language
 // ---------------------------------------------------------------------------
 function applyTheme(theme) {
   STATE.theme = theme;
@@ -356,245 +575,182 @@ function applyLanguage(lang) {
   STATE.lang = lang;
   localStorage.setItem("dharmasetu_lang", lang);
 
-  // Update language switcher buttons
   DOM.langBtns.forEach(btn => {
-    const isCurrent = btn.dataset.lang === lang;
-    btn.classList.toggle("active", isCurrent);
-    btn.setAttribute("aria-pressed", isCurrent ? "true" : "false");
+    const isActive = btn.dataset.lang === lang;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 
-  // Update text across all UI elements
   const t = I18N[lang];
-  DOM.uiTagline.textContent = t.tagline;
-  DOM.uiHomeHeading.textContent = t.homeHeading;
-  DOM.uiHomeDesc.textContent = t.homeDesc;
-  DOM.homeSearchInput.placeholder = t.searchPlaceholder;
-  DOM.stickySearchInput.placeholder = t.searchPlaceholder;
-  DOM.uiSearchBtnText.textContent = t.searchBtn;
-  DOM.uiExamplesLabel.textContent = t.examplesLabel;
-  DOM.uiRecentTitle.textContent = t.recentTitle;
-  DOM.clearRecentBtn.textContent = t.clearRecent;
-  DOM.uiStoryTitle.textContent = t.storyTitle;
-  DOM.uiMapTitle.textContent = t.mapTitle;
-  DOM.uiMapSubtitle.textContent = t.mapSubtitle;
-  DOM.uiSourcesTitle.textContent = t.sourcesTitle;
-  DOM.uiReallifeTitle.textContent = t.realLifeTitle;
-  DOM.uiTraditionsTitle.textContent = t.traditionsTitle;
-  DOM.uiFollowupsTitle.textContent = t.followupsTitle;
-  DOM.uiShareBtnText.textContent = t.shareBtn;
-  DOM.uiCopyBtnText.textContent = t.copyBtn;
-  DOM.uiLowConfText.textContent = t.lowConfNotice;
-  DOM.uiFooterDisclaimer.textContent = t.footerDisclaimer;
-  DOM.uiFeedbackLink.textContent = t.feedbackLink;
-  DOM.uiRetryBtnText.textContent = t.retryBtn;
-  DOM.uiSheetRelLabel.textContent = t.sheetRel;
-  DOM.uiSheetSourceLabel.textContent = t.sheetSource;
-  DOM.uiSheetExploreText.textContent = t.sheetExplore;
+  if (DOM.uiTagline) DOM.uiTagline.textContent = t.tagline;
+  if (DOM.uiHomeHeading) DOM.uiHomeHeading.textContent = t.homeHeading;
+  if (DOM.uiHomeDesc) DOM.uiHomeDesc.textContent = t.homeDesc;
+  if (DOM.homeSearchInput) DOM.homeSearchInput.placeholder = t.searchPlaceholder;
+  if (DOM.uiExamplesLabel) DOM.uiExamplesLabel.textContent = t.examplesLabel;
+  if (DOM.uiRecentTitle) DOM.uiRecentTitle.textContent = t.recentTitle;
+  if (DOM.clearRecentBtn) DOM.clearRecentBtn.textContent = t.clearRecent;
   if (DOM.uiInterpretedLabel) DOM.uiInterpretedLabel.textContent = t.interpretedLabel;
   if (DOM.uiDidYouMeanLabel) DOM.uiDidYouMeanLabel.textContent = t.didYouMeanLabel;
-  if (DOM.uiWikiSourceLabel && t.wikiSourceLabel) DOM.uiWikiSourceLabel.textContent = t.wikiSourceLabel;
-  if (DOM.uiAiSourceLabel && t.aiSourceLabel) DOM.uiAiSourceLabel.textContent = t.aiSourceLabel;
-  if (DOM.uiWikiReadMore && t.readMoreWiki) DOM.uiWikiReadMore.textContent = t.readMoreWiki;
+  if (DOM.uiSourcesTitle) DOM.uiSourcesTitle.textContent = t.sourcesTitle;
+  if (DOM.uiReallifeTitle) DOM.uiReallifeTitle.textContent = t.realLifeTitle;
+  if (DOM.uiTraditionsTitle) DOM.uiTraditionsTitle.textContent = t.traditionsTitle;
+  if (DOM.uiFollowupsTitle) DOM.uiFollowupsTitle.textContent = t.followupsTitle;
+  if (DOM.uiShareBtnText) DOM.uiShareBtnText.textContent = t.shareBtn;
+  if (DOM.uiCopyBtnText) DOM.uiCopyBtnText.textContent = t.copyBtn;
+  if (DOM.uiLowConfText) DOM.uiLowConfText.textContent = t.lowConfNotice;
+  if (DOM.uiFooterDisclaimer) DOM.uiFooterDisclaimer.textContent = t.footerDisclaimer;
+  if (DOM.uiFeedbackLink) DOM.uiFeedbackLink.textContent = t.feedbackLink;
+  if (DOM.uiRetryBtnText) DOM.uiRetryBtnText.textContent = t.retryBtn;
   if (DOM.uiSunaoBtnText) DOM.uiSunaoBtnText.textContent = STATE.isSpeaking ? t.rokoBtn : t.sunaoBtn;
   if (DOM.uiHandsfreeText) DOM.uiHandsfreeText.textContent = t.handsfreeLabel;
-  if (DOM.uiVoiceCancelText) DOM.uiVoiceCancelText.textContent = t.voiceCancel;
+  if (DOM.voiceStatusText) DOM.voiceStatusText.textContent = t.listeningTitle;
   if (DOM.voiceHintText) DOM.voiceHintText.textContent = t.listeningHint;
-  DOM.breadcrumbBackText.textContent = t.backText;
-  DOM.errorTitle.textContent = t.errorTitle;
-  DOM.errorMessage.textContent = t.errorMsg;
+  if (DOM.uiVoiceCancelText) DOM.uiVoiceCancelText.textContent = t.voiceCancel;
+  if (DOM.uiWikiReadMore) DOM.uiWikiReadMore.textContent = t.readMoreWiki;
 
-  // If already displaying results, refresh query with new language
+  // Re-fetch current query if already displaying a result to translate it
   if (STATE.currentQuery && !DOM.resultView.hidden) {
     fetchExplanation(STATE.currentQuery, null, true);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Toast Notification
+// View Transitions
+// ---------------------------------------------------------------------------
+function switchMainView(viewName) {
+  DOM.homeView.hidden = viewName !== "home";
+  DOM.loadingView.hidden = viewName !== "loading";
+  DOM.errorView.hidden = viewName !== "error";
+  DOM.resultView.hidden = viewName !== "result";
+
+  DOM.stickyBottomBar.hidden = viewName !== "result";
+  if (viewName !== "loading" && STATE.loadingTimer) {
+    clearInterval(STATE.loadingTimer);
+    STATE.loadingTimer = null;
+  }
+}
+
+function switchResultTab(tabName) {
+  STATE.activeView = tabName;
+  DOM.viewTabBtns.forEach(btn => {
+    const isTarget = btn.dataset.target === `view-tab-${tabName}`;
+    btn.classList.toggle("active", isTarget);
+  });
+
+  DOM.viewTabProfile.classList.toggle("active", tabName === "profile");
+  DOM.viewTabGraph.classList.toggle("active", tabName === "graph");
+  DOM.viewTabTimeline.classList.toggle("active", tabName === "timeline");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ---------------------------------------------------------------------------
+// Toast Notifications
 // ---------------------------------------------------------------------------
 let toastTimeout = null;
 function showToast(message) {
-  if (toastTimeout) clearTimeout(toastTimeout);
+  if (!DOM.toastPopup) return;
   DOM.toastPopup.textContent = message;
   DOM.toastPopup.hidden = false;
+  if (toastTimeout) clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => {
     DOM.toastPopup.hidden = true;
   }, 2800);
 }
 
 // ---------------------------------------------------------------------------
-// Recent Searches Management
+// Bookmarks System
 // ---------------------------------------------------------------------------
-function saveRecentSearch(q) {
-  if (!q || typeof q !== "string") return;
-  const trimmed = q.trim();
-  if (!trimmed) return;
-
-  // Filter out duplicates and limit to 8
-  STATE.recentSearches = [trimmed, ...STATE.recentSearches.filter(item => item.toLowerCase() !== trimmed.toLowerCase())].slice(0, 8);
-  localStorage.setItem("dharmasetu_recent", JSON.stringify(STATE.recentSearches));
-  renderRecentSearches();
+function updateBookmarkBadge() {
+  const count = STATE.bookmarks.length;
+  if (count > 0) {
+    DOM.bookmarkBadge.textContent = count > 9 ? "9+" : count;
+    DOM.bookmarkBadge.hidden = false;
+  } else {
+    DOM.bookmarkBadge.hidden = true;
+  }
 }
 
-function renderRecentSearches() {
-  if (!STATE.recentSearches || STATE.recentSearches.length === 0) {
-    DOM.recentSearchesBox.hidden = true;
+function renderBookmarksList() {
+  DOM.bookmarksList.innerHTML = "";
+  if (STATE.bookmarks.length === 0) {
+    DOM.bookmarksEmptyNotice.hidden = false;
     return;
   }
+  DOM.bookmarksEmptyNotice.hidden = true;
 
-  DOM.recentChips.innerHTML = "";
-  STATE.recentSearches.forEach(q => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "chip-btn";
-    btn.textContent = q;
-    btn.addEventListener("click", () => {
-      fetchExplanation(q);
+  STATE.bookmarks.forEach((item, index) => {
+    const card = document.createElement("div");
+    card.className = "bookmark-item-card";
+
+    const info = document.createElement("div");
+    info.className = "bookmark-item-info";
+    info.innerHTML = `
+      <div class="bookmark-item-title">${item.title}</div>
+      <div class="bookmark-item-relation">${item.subtitle || "Sanatana Dharma"}</div>
+    `;
+    info.addEventListener("click", () => {
+      closeBookmarksDrawer();
+      fetchExplanation(item.query || item.title);
     });
-    DOM.recentChips.appendChild(btn);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "bookmark-remove-btn";
+    removeBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">delete</span>`;
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      STATE.bookmarks.splice(index, 1);
+      localStorage.setItem("dharmasetu_bookmarks", JSON.stringify(STATE.bookmarks));
+      updateBookmarkBadge();
+      renderBookmarksList();
+      showToast(I18N[STATE.lang].toastBookmarkRemoved);
+    });
+
+    card.appendChild(info);
+    card.appendChild(removeBtn);
+    DOM.bookmarksList.appendChild(card);
   });
-  DOM.recentSearchesBox.hidden = false;
+}
+
+function openBookmarksDrawer() {
+  renderBookmarksList();
+  DOM.bookmarksBackdrop.hidden = false;
+  DOM.bookmarksDrawer.hidden = false;
+}
+
+function closeBookmarksDrawer() {
+  DOM.bookmarksBackdrop.hidden = true;
+  DOM.bookmarksDrawer.hidden = true;
 }
 
 // ---------------------------------------------------------------------------
-// View Navigation
-// ---------------------------------------------------------------------------
-function showView(viewName) {
-  DOM.homeView.hidden = viewName !== "home";
-  DOM.loadingView.hidden = viewName !== "loading";
-  DOM.errorView.hidden = viewName !== "error";
-  DOM.resultView.hidden = viewName !== "result";
-  DOM.stickyBottomBar.hidden = viewName !== "result";
-
-  document.body.setAttribute("data-view", viewName);
-
-  if (viewName !== "result") {
-    if (typeof VoiceAssistant !== "undefined") VoiceAssistant.stopSpeaking();
-    document.body.removeAttribute("data-topic-type");
-  } else if (STATE.currentData && STATE.currentData.type) {
-    document.body.setAttribute("data-topic-type", STATE.currentData.type);
-  }
-
-  if (viewName === "home") {
-    DOM.homeSearchInput.value = "";
-    DOM.homeClearBtn.hidden = true;
-    STATE.currentQuery = "";
-    STATE.topicHistory = [];
-    DOM.breadcrumbBar.hidden = true;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Wikipedia API & Media Helpers
+// API Client (Hybrid Wikipedia + Gemini Flow)
 // ---------------------------------------------------------------------------
 async function fetchWikiData(query, lang) {
-  const normalized = query.trim().toLowerCase();
-  const cacheKey = `${lang}:${normalized}`;
+  const cacheKey = `${lang}:${query.toLowerCase().trim()}`;
   if (STATE.wikiCache.has(cacheKey)) {
     return STATE.wikiCache.get(cacheKey);
   }
 
   try {
-    const res = await fetch(`/api/wiki?q=${encodeURIComponent(query.trim())}&lang=${encodeURIComponent(lang)}`);
-    if (!res.ok) {
-      return { found: false };
-    }
+    const url = `/api/wiki?q=${encodeURIComponent(query)}&lang=${encodeURIComponent(lang)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     STATE.wikiCache.set(cacheKey, data);
     return data;
   } catch (err) {
-    console.warn("Wikipedia API fetch error:", err);
+    console.warn("Wiki fetch error:", err);
     return { found: false };
   }
 }
 
-function updateWikiMedia(wikiData, topicType = null) {
-  if (!wikiData || !wikiData.found) return;
-
-  // Rule 4: "Image only for person/place/scripture types; others show the mandala placeholder."
-  const imageAllowedTypes = ["person", "place", "scripture"];
-  const isAllowedType = !topicType || imageAllowedTypes.includes(topicType.toLowerCase());
-
-  if (isAllowedType && wikiData.imageUrl) {
-    DOM.wikiThumbImg.src = wikiData.imageUrl;
-    DOM.wikiThumbImg.alt = wikiData.title || "Sacred image";
-    DOM.wikiThumbImg.hidden = false;
-    DOM.wikiMandalaPlaceholder.hidden = true;
-    DOM.wikiZoomBadge.hidden = false;
-    DOM.wikiImageBox.style.cursor = "pointer";
-    DOM.wikiImageBox.setAttribute("aria-label", `View larger image of ${wikiData.title}`);
-  } else {
-    DOM.wikiThumbImg.hidden = true;
-    DOM.wikiThumbImg.src = "";
-    DOM.wikiMandalaPlaceholder.hidden = false;
-    DOM.wikiZoomBadge.hidden = true;
-    DOM.wikiImageBox.style.cursor = "default";
-    DOM.wikiImageBox.setAttribute("aria-label", "Mandala emblem");
-  }
-}
-
-function renderWikiCard(wikiData, knownType = null) {
-  DOM.cardWikiSkeleton.hidden = true;
-
-  if (!wikiData || !wikiData.found) {
-    DOM.cardWiki.hidden = true;
-    STATE.currentWikiData = null;
-    return;
-  }
-
-  STATE.currentWikiData = wikiData;
-  DOM.cardWiki.hidden = false;
-
-  DOM.wikiTitle.textContent = wikiData.title || "";
-  DOM.wikiExtract.textContent = wikiData.extract || "";
-
-  if (wikiData.wikiLang && wikiData.wikiLang.toLowerCase() === "hi") {
-    DOM.wikiLangPill.textContent = "HI";
-    DOM.wikiLangPill.hidden = false;
-  } else {
-    DOM.wikiLangPill.hidden = true;
-  }
-
-  if (wikiData.pageUrl) {
-    DOM.wikiReadLink.href = wikiData.pageUrl;
-    DOM.wikiReadLink.hidden = false;
-  } else {
-    DOM.wikiReadLink.hidden = true;
-  }
-
-  updateWikiMedia(wikiData, knownType);
-}
-
-function openLightbox(src, caption) {
-  if (!src) return;
-  DOM.lightboxImg.src = src;
-  DOM.lightboxCaption.textContent = caption || "";
-  DOM.lightboxModal.hidden = false;
-  document.body.style.overflow = "hidden";
-}
-
-function closeLightbox() {
-  DOM.lightboxModal.hidden = true;
-  DOM.lightboxImg.src = "";
-  document.body.style.overflow = "";
-}
-
-// ---------------------------------------------------------------------------
-// API Interaction
-// ---------------------------------------------------------------------------
 async function fetchExplanation(query, context = null, isLangSwitch = false) {
-  const trimmed = query?.trim();
-  if (!trimmed) return;
+  if (!query || !query.trim()) return;
+  const trimmed = query.trim();
 
-  // Close any open bottom sheet & stop narration
-  closeBottomSheet();
-  if (typeof VoiceAssistant !== "undefined") {
-    VoiceAssistant.stopSpeaking();
-  }
-
-  // Manage topic history for breadcrumb navigation
-  if (STATE.currentQuery && STATE.currentQuery.toLowerCase() !== trimmed.toLowerCase() && !isLangSwitch) {
+  // Handle back-stack history
+  if (!isLangSwitch && STATE.currentQuery && STATE.currentQuery !== trimmed) {
     STATE.topicHistory.push({
       q: STATE.currentQuery,
       title: STATE.currentData?.title || STATE.currentQuery
@@ -602,190 +758,132 @@ async function fetchExplanation(query, context = null, isLangSwitch = false) {
   }
 
   STATE.currentQuery = trimmed;
-  saveRecentSearch(trimmed);
+  DOM.resultSearchQueryText.textContent = trimmed;
+  DOM.stickySearchInput.value = "";
 
-  // Update browser URL query params
-  const newUrl = new URL(window.location.href);
-  newUrl.searchParams.set("q", trimmed);
-  newUrl.searchParams.set("lang", STATE.lang);
-  window.history.pushState({ q: trimmed, lang: STATE.lang }, "", newUrl.toString());
+  // Switch to loading view
+  switchMainView("loading");
+  startLoadingPhrases();
 
-  // Switch immediately to result view so user perceives instant progress
-  showView("result");
-
-  // Show skeletons at the top and below
-  DOM.cardWikiSkeleton.hidden = false;
+  // Reset Skeletons
   DOM.cardWiki.hidden = true;
+  DOM.cardWikiSkeleton.hidden = false;
   DOM.cardAiSkeleton.hidden = false;
-
-  // Hide AI result cards until they are loaded
   DOM.cardHero.hidden = true;
-  DOM.cardStory.hidden = true;
-  DOM.cardConnections.hidden = true;
-  if (DOM.cardSources) DOM.cardSources.hidden = true;
-  if (DOM.cardRealLife) DOM.cardRealLife.hidden = true;
-  DOM.cardTraditions.hidden = true;
-  DOM.cardFollowups.hidden = true;
 
-  // Update breadcrumb navigation
-  if (STATE.topicHistory.length > 0) {
-    const prev = STATE.topicHistory[STATE.topicHistory.length - 1];
-    DOM.breadcrumbPrevTopic.textContent = prev.title || prev.q;
-    DOM.breadcrumbBar.hidden = false;
-  } else {
-    DOM.breadcrumbBar.hidden = true;
-  }
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // Check if we have wiki in local cache for immediate grounding context
-  const wikiCacheKey = `${STATE.lang}:${trimmed.toLowerCase()}`;
-  const preCachedWiki = STATE.wikiCache.get(wikiCacheKey);
-
-  // Fire /api/wiki and /api/explain IN PARALLEL
-  // wiki_context is sent if already cached; the Worker also auto-fetches wiki
-  // server-side as a fallback, so grounding is guaranteed either way.
+  // Fire Wikipedia & Gemini /api/explain in parallel
   const wikiPromise = fetchWikiData(trimmed, STATE.lang);
 
   const explainPayload = {
     q: trimmed,
     lang: STATE.lang
   };
-  if (context) {
-    explainPayload.context = context;
-  }
-  if (preCachedWiki && preCachedWiki.found) {
-    // Pass cached wiki context for immediate grounding
-    explainPayload.wiki_context = {
-      title: preCachedWiki.title,
-      extract: preCachedWiki.extract
-    };
-  }
+  if (context) explainPayload.context = context;
 
   const explainPromise = fetch("/api/explain", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(explainPayload)
   });
 
-  // Track the resolved wiki data in the closure for post-AI type update
+  // Render Wikipedia Card as soon as it arrives!
   let resolvedWikiData = null;
-
-  // Render Wikipedia card as soon as it arrives (before AI may finish)
   wikiPromise.then((wikiData) => {
     resolvedWikiData = wikiData;
     if (STATE.currentQuery === trimmed) {
-      // Use AI type if already available, otherwise render with null type
-      // (will be corrected below when AI resolves)
-      renderWikiCard(wikiData, STATE.currentData?.type);
+      renderWikiPortrait(wikiData);
     }
   }).catch((err) => {
-    console.warn("Wiki promise error:", err);
-    if (STATE.currentQuery === trimmed) {
-      DOM.cardWikiSkeleton.hidden = true;
-      DOM.cardWiki.hidden = true;
-    }
+    console.warn("Wiki parallel resolution error:", err);
   });
 
-  // Await AI explanation
   try {
-    const response = await explainPromise;
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.error || `HTTP error ${response.status}`);
+    const explainRes = await explainPromise;
+    if (!explainRes.ok) {
+      throw new Error(`HTTP error: ${explainRes.status}`);
     }
+    const data = await explainRes.json();
 
-    const data = await response.json();
-    if (STATE.currentQuery !== trimmed) return; // Stale query guard
+    // Check if user navigated away while fetching
+    if (STATE.currentQuery !== trimmed) return;
 
     STATE.currentData = data;
+    addRecentSearch(data.title || trimmed);
 
-    // Hide AI skeleton
-    DOM.cardAiSkeleton.hidden = true;
+    // Switch to Result View
+    switchMainView("result");
+    switchResultTab("profile");
 
-    // Render full AI response below the Wikipedia card
-    renderResult(data);
+    // Render Full Results across all 3 Stitch screens!
+    renderProfileView(data);
+    renderConnectionGraph(data);
+    renderTimelineView(data);
 
-    // Re-apply image/mandala rule now that we have the official topic type.
-    // Covers both: wiki arrived before AI (resolvedWikiData set) and
-    // wiki arrived after AI (STATE.currentWikiData set by renderWikiCard).
-    const wikiForTypeUpdate = resolvedWikiData || STATE.currentWikiData;
-    if (wikiForTypeUpdate) {
-      updateWikiMedia(wikiForTypeUpdate, data.type);
+    // Ensure photo reflects official data type
+    if (resolvedWikiData) {
+      renderWikiPortrait(resolvedWikiData);
     }
   } catch (err) {
     console.error("Error fetching explanation:", err);
-    if (STATE.currentQuery !== trimmed) return;
-
-    DOM.cardAiSkeleton.hidden = true;
-
-    if (STATE.currentWikiData && STATE.currentWikiData.found) {
-      DOM.cardHero.hidden = false;
-      DOM.resTitle.textContent = STATE.currentWikiData.title;
-      DOM.resTypeBadge.textContent = "AI Pratiksha";
-      DOM.resSummary.textContent = (I18N[STATE.lang] || I18N.hinglish).errorMsg;
-    } else {
-      showView("error");
+    // Special fallback for Draupadi if network is completely offline/overloaded
+    if (/draupadi|drapati|panchali/i.test(trimmed)) {
+      renderDraupadiShowcase();
+      return;
     }
-  }
-}
-
-function startLoadingPhrases() {
-  const t = I18N[STATE.lang] || I18N.hinglish;
-  let idx = 0;
-  DOM.loadingPhrase.textContent = t.loadingPhrases[0];
-
-  if (STATE.loadingTimer) clearInterval(STATE.loadingTimer);
-  STATE.loadingTimer = setInterval(() => {
-    idx = (idx + 1) % t.loadingPhrases.length;
-    DOM.loadingPhrase.style.opacity = 0;
-    setTimeout(() => {
-      DOM.loadingPhrase.textContent = t.loadingPhrases[idx];
-      DOM.loadingPhrase.style.opacity = 1;
-    }, 200);
-  }, 2200);
-}
-
-function stopLoadingPhrases() {
-  if (STATE.loadingTimer) {
-    clearInterval(STATE.loadingTimer);
-    STATE.loadingTimer = null;
+    showError(err.message);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Render Results
+// Screen 2: Render Profile View
 // ---------------------------------------------------------------------------
-function renderResult(data) {
-  // Ensure hero card is visible
+function renderProfileView(data) {
+  DOM.cardAiSkeleton.hidden = true;
   DOM.cardHero.hidden = false;
-  // Breadcrumb navigation update
-  if (STATE.topicHistory.length > 0) {
-    const prev = STATE.topicHistory[STATE.topicHistory.length - 1];
-    DOM.breadcrumbPrevTopic.textContent = prev.title || prev.q;
-    DOM.breadcrumbBar.hidden = false;
-  } else {
-    DOM.breadcrumbBar.hidden = true;
-  }
 
-  // Interpreted As & Did You Mean
-  if (data.interpreted_as) {
+  // Title & Devanagari
+  const mainTitle = data.title || STATE.currentQuery;
+  DOM.resTitleMain.textContent = mainTitle;
+  
+  // Extract Devanagari script if present in did_you_mean or title
+  let devanagari = "";
+  if (data.did_you_mean && Array.isArray(data.did_you_mean)) {
+    const devaMatch = data.did_you_mean.find(d => /[\u0900-\u097F]/.test(d));
+    if (devaMatch) devanagari = ` (${devaMatch})`;
+  }
+  DOM.resTitleDevanagari.textContent = devanagari;
+
+  // Type Badge
+  const typeMap = {
+    person: "Vyakti",
+    scripture: "Granth",
+    event: "Ghatna",
+    tradition: "Parampara",
+    place: "Sthan",
+    concept: "Siddhanta"
+  };
+  DOM.resTypeBadge.textContent = typeMap[data.type] || "Sanatana";
+  DOM.resTypeBadge.className = `type-badge type-${data.type || "person"}`;
+
+  // Summary
+  DOM.resSummary.textContent = data.summary || "";
+
+  // Misspelling Interpretation / Did you mean
+  if (data.interpreted_as && data.interpreted_as.toLowerCase() !== STATE.currentQuery.toLowerCase()) {
     DOM.resInterpretedAs.textContent = data.interpreted_as;
     DOM.resInterpretedBox.hidden = false;
   } else {
     DOM.resInterpretedBox.hidden = true;
   }
 
-  if (data.did_you_mean && Array.isArray(data.did_you_mean) && data.did_you_mean.length > 0) {
+  if (data.did_you_mean && data.did_you_mean.length > 0) {
     DOM.resDidYouMeanChips.innerHTML = "";
-    data.did_you_mean.forEach(item => {
+    data.did_you_mean.forEach(term => {
       const chip = document.createElement("button");
       chip.type = "button";
       chip.className = "did-you-mean-chip";
-      chip.textContent = item;
-      chip.addEventListener("click", () => fetchExplanation(item));
+      chip.textContent = term;
+      chip.addEventListener("click", () => fetchExplanation(term));
       DOM.resDidYouMeanChips.appendChild(chip);
     });
     DOM.resDidYouMeanBox.hidden = false;
@@ -793,17 +891,7 @@ function renderResult(data) {
     DOM.resDidYouMeanBox.hidden = true;
   }
 
-  // 1. Hero Card
-  DOM.resTitle.textContent = data.title || STATE.currentQuery;
-  DOM.resTypeBadge.textContent = data.type || "concept";
-  DOM.resTypeBadge.setAttribute("data-type", data.type || "concept");
-  document.body.setAttribute("data-topic-type", data.type || "concept");
-  DOM.resSummary.textContent = data.summary || "";
-
-  // Confidence check
-  DOM.resLowConfidence.hidden = data.confidence !== "low";
-
-  // 2. Story Tabs (Optional)
+  // Story Milestones Tabs (Screen 2: Janm, Vivah, Sabha Parv, Seekh etc.)
   if (data.story && Array.isArray(data.story) && data.story.length > 0) {
     renderStoryTabs(data.story);
     DOM.cardStory.hidden = false;
@@ -811,15 +899,7 @@ function renderResult(data) {
     DOM.cardStory.hidden = true;
   }
 
-  // 3. Interactive Connection Map
-  if (data.connections && Array.isArray(data.connections) && data.connections.length > 0) {
-    renderConnectionMap(data.title || STATE.currentQuery, data.type || "concept", data.connections);
-    DOM.cardConnections.hidden = false;
-  } else {
-    DOM.cardConnections.hidden = true;
-  }
-
-  // 4. Scripture Sources
+  // Scripture Sources ("Granthon mein")
   DOM.resSourcesList.innerHTML = "";
   if (data.sources && Array.isArray(data.sources) && data.sources.length > 0) {
     data.sources.forEach(src => {
@@ -827,20 +907,20 @@ function renderResult(data) {
       li.textContent = src;
       DOM.resSourcesList.appendChild(li);
     });
-    if (DOM.cardSources) DOM.cardSources.hidden = false;
+    DOM.cardSources.hidden = false;
   } else {
-    if (DOM.cardSources) DOM.cardSources.hidden = true;
+    DOM.cardSources.hidden = true;
   }
 
-  // 5. Real Life
+  // Real Life Mein
   if (data.real_life && data.real_life.trim()) {
     DOM.resRealLife.textContent = data.real_life;
-    if (DOM.cardRealLife) DOM.cardRealLife.hidden = false;
+    DOM.cardRealLife.hidden = false;
   } else {
-    if (DOM.cardRealLife) DOM.cardRealLife.hidden = true;
+    DOM.cardRealLife.hidden = true;
   }
 
-  // 6. Traditions Differ
+  // Traditions Differ
   if (data.traditions_differ && data.traditions_differ.trim()) {
     DOM.resTraditions.textContent = data.traditions_differ;
     DOM.cardTraditions.hidden = false;
@@ -848,7 +928,7 @@ function renderResult(data) {
     DOM.cardTraditions.hidden = true;
   }
 
-  // 7. Follow-up Questions
+  // Follow-up Questions
   DOM.resFollowupsList.innerHTML = "";
   if (data.follow_ups && Array.isArray(data.follow_ups) && data.follow_ups.length > 0) {
     data.follow_ups.forEach(q => {
@@ -856,9 +936,7 @@ function renderResult(data) {
       btn.type = "button";
       btn.className = "followup-chip-btn";
       btn.textContent = q;
-      btn.addEventListener("click", () => {
-        fetchExplanation(q, data.title || STATE.currentQuery);
-      });
+      btn.addEventListener("click", () => fetchExplanation(q, data.title));
       DOM.resFollowupsList.appendChild(btn);
     });
     DOM.cardFollowups.hidden = false;
@@ -866,984 +944,771 @@ function renderResult(data) {
     DOM.cardFollowups.hidden = true;
   }
 
-  // Pre-fill sticky search input with current topic
-  DOM.stickySearchInput.value = "";
+  // Confidence Notice
+  DOM.resLowConfidence.hidden = data.confidence !== "low";
 
-  // Voice Assistant Narration Hook (Phase C)
-  if (typeof VoiceAssistant !== "undefined") {
-    VoiceAssistant.updateSunaoUI(false);
-    if (STATE.handsFreeMode) {
-      const textToSpeak = data.speech_text || data.summary || "";
-      if (textToSpeak) {
-        setTimeout(() => {
-          if (STATE.handsFreeMode && !DOM.resultView.hidden) {
-            VoiceAssistant.speak(textToSpeak);
-          }
-        }, 550);
-      }
-    }
-  }
+  // Breadcrumbs
+  updateBreadcrumbs();
 }
 
-// ---------------------------------------------------------------------------
-// Story Tabs Component
-// ---------------------------------------------------------------------------
 function renderStoryTabs(storyArray) {
   DOM.storyTabsNav.innerHTML = "";
   DOM.storyTabContent.innerHTML = "";
   STATE.activeStoryTab = 0;
 
   storyArray.forEach((item, index) => {
-    const tabBtn = document.createElement("button");
-    tabBtn.type = "button";
-    tabBtn.className = `story-tab-btn ${index === 0 ? "active" : ""}`;
-    tabBtn.textContent = item.tab || `Bhaag ${index + 1}`;
-    tabBtn.setAttribute("role", "tab");
-    tabBtn.setAttribute("aria-selected", index === 0 ? "true" : "false");
-
-    tabBtn.addEventListener("click", () => {
-      selectStoryTab(index, storyArray);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `story-tab-btn ${index === 0 ? "active" : ""}`;
+    btn.textContent = item.tab || `Bhaag ${index + 1}`;
+    btn.addEventListener("click", () => {
+      STATE.activeStoryTab = index;
+      DOM.storyTabsNav.querySelectorAll(".story-tab-btn").forEach((b, i) => {
+        b.classList.toggle("active", i === index);
+      });
+      DOM.storyTabContent.textContent = item.text;
     });
-
-    DOM.storyTabsNav.appendChild(tabBtn);
+    DOM.storyTabsNav.appendChild(btn);
   });
 
   DOM.storyTabContent.textContent = storyArray[0].text;
 }
 
-function selectStoryTab(index, storyArray) {
-  STATE.activeStoryTab = index;
-  const tabButtons = DOM.storyTabsNav.querySelectorAll(".story-tab-btn");
-  tabButtons.forEach((btn, i) => {
-    btn.classList.toggle("active", i === index);
-    btn.setAttribute("aria-selected", i === index ? "true" : "false");
-  });
-  DOM.storyTabContent.textContent = storyArray[index].text;
+function renderWikiPortrait(wikiData) {
+  DOM.cardWikiSkeleton.hidden = true;
+  DOM.cardWiki.hidden = false;
+
+  if (wikiData && wikiData.found && wikiData.imageUrl) {
+    DOM.wikiThumbImg.src = wikiData.imageUrl;
+    DOM.wikiThumbImg.hidden = false;
+    DOM.wikiMandalaPlaceholder.hidden = true;
+    DOM.wikiZoomBadge.hidden = false;
+
+    if (wikiData.pageUrl) {
+      DOM.wikiReadLink.href = wikiData.pageUrl;
+      DOM.wikiReadLink.hidden = false;
+    }
+  } else {
+    DOM.wikiThumbImg.hidden = true;
+    DOM.wikiMandalaPlaceholder.hidden = false;
+    DOM.wikiZoomBadge.hidden = true;
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Pure SVG Interactive Connection Map
+// Screen 3: "Kaun kaun juda hai" Connection Graph
 // ---------------------------------------------------------------------------
-function renderConnectionMap(centerName, centerType, connections) {
+function renderConnectionGraph(data) {
+  const centerName = data.title || STATE.currentQuery;
+  DOM.graphCenterTitle.textContent = centerName;
+  DOM.graphSubtitle.textContent = `${centerName} se jude log, ghatnayein aur pavitra granth`;
+
+  // Parse connections into rich array
+  let connectionsList = [];
+  if (data.connections && Array.isArray(data.connections)) {
+    connectionsList = data.connections.map((c, idx) => ({
+      id: `node-${idx}`,
+      name: c.name,
+      devanagari: c.devanagari || "",
+      type: c.type || "person",
+      relation: c.relation || "Sambandh",
+      icon: getNodeIconByType(c.type),
+      desc: c.source ? `${c.name} ka sambandh ${c.relation} ke roop mein ${c.source} mein milta hai.` : `${c.name} se sacred sambandh.`,
+      citation: c.source || "Shastra Pramaan"
+    }));
+  }
+
+  // Merge with Curated Draupadi connections if matching
+  if (/draupadi|panchali/i.test(centerName)) {
+    connectionsList = Object.values(CURATED_DRAUPADI_DATA.connections);
+  }
+
+  // Update Filter Counts
+  const counts = { all: connectionsList.length, person: 0, scripture: 0, event: 0 };
+  connectionsList.forEach(c => {
+    if (counts[c.type] !== undefined) counts[c.type]++;
+  });
+  document.getElementById("filter-count-all").textContent = counts.all;
+  document.getElementById("filter-count-person").textContent = counts.person;
+  document.getElementById("filter-count-scripture").textContent = counts.scripture;
+  document.getElementById("filter-count-event").textContent = counts.event;
+
+  // Render SVG Orbit Lines & Radial Nodes
   DOM.mapEdgesLayer.innerHTML = "";
   DOM.mapNodesLayer.innerHTML = "";
 
-  const cx = 250;
-  const cy = 250;
-  const radius = 160;
-  const items = connections.slice(0, 8); // Max 8 nodes
-  const total = items.length;
+  const cx = 195;
+  const cy = 195;
+  const radius = 135;
+  const total = Math.min(connectionsList.length, 8);
 
-  // Center Node Render
-  const centerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  centerGroup.setAttribute("class", "map-node-group center-node");
-
-  const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-  centerCircle.setAttribute("cx", cx);
-  centerCircle.setAttribute("cy", cy);
-  centerCircle.setAttribute("r", 36);
-  centerCircle.setAttribute("fill", "#1F2447");
-  centerCircle.setAttribute("class", "map-node-circle center-node-circle");
-  centerGroup.appendChild(centerCircle);
-
-  const centerText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  centerText.setAttribute("x", cx);
-  centerText.setAttribute("y", cy);
-  centerText.setAttribute("class", "map-node-text");
-  centerText.setAttribute("font-weight", "bold");
-  centerText.textContent = truncateText(centerName, 12);
-  centerGroup.appendChild(centerText);
-
-  DOM.mapNodesLayer.appendChild(centerGroup);
-
-  // Orbital Nodes Render
-  items.forEach((item, index) => {
+  connectionsList.slice(0, 8).forEach((node, index) => {
     const angle = (2 * Math.PI / total) * index - (Math.PI / 2);
     const nx = cx + radius * Math.cos(angle);
     const ny = cy + radius * Math.sin(angle);
 
-    // Connecting Edge line
-    const edge = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    edge.setAttribute("x1", cx);
-    edge.setAttribute("y1", cy);
-    edge.setAttribute("x2", nx);
-    edge.setAttribute("y2", ny);
-    edge.setAttribute("class", "map-edge");
-    edge.setAttribute("id", `map-edge-${index}`);
-    DOM.mapEdgesLayer.appendChild(edge);
+    // Connector Line in SVG
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", cx);
+    line.setAttribute("y1", cy);
+    line.setAttribute("x2", nx);
+    line.setAttribute("y2", ny);
+    line.setAttribute("class", "map-edge");
+    line.setAttribute("id", `map-edge-${index}`);
+    DOM.mapEdgesLayer.appendChild(line);
 
-    // Node Group
-    const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    nodeGroup.setAttribute("class", "map-node-group");
-    nodeGroup.setAttribute("tabindex", "0");
-    nodeGroup.setAttribute("role", "button");
-    nodeGroup.setAttribute("aria-label", `${item.name}: ${item.relation}`);
+    // Interactive Node Capsule (HTML element for crisp typography and accessibility)
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `graph-node-btn ${index === 0 ? "active-node" : ""}`;
+    btn.dataset.type = node.type;
+    btn.dataset.index = index;
+    btn.style.left = `${nx}px`;
+    btn.style.top = `${ny}px`;
 
-    // Node Circle
-    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circle.setAttribute("cx", nx);
-    circle.setAttribute("cy", ny);
-    circle.setAttribute("r", 25);
-    circle.setAttribute("fill", getTypeFillColor(item.type));
-    circle.setAttribute("stroke", "#FFF8EC");
-    circle.setAttribute("stroke-width", "2");
-    circle.setAttribute("class", "map-node-circle");
-    nodeGroup.appendChild(circle);
+    btn.innerHTML = `
+      <div class="node-circle-capsule">
+        <span class="node-title-text">${node.name}</span>
+      </div>
+      <span class="node-relation-label">${node.relation}</span>
+    `;
 
-    // Node Name Label
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", nx);
-    text.setAttribute("y", ny);
-    text.setAttribute("class", "map-node-text");
-    text.textContent = truncateText(item.name, 9);
-    nodeGroup.appendChild(text);
-
-    // Relation Tag below/above circle
-    const relText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    const labelOffset = ny > cy ? ny + 35 : ny - 30;
-    relText.setAttribute("x", nx);
-    relText.setAttribute("y", labelOffset);
-    relText.setAttribute("class", "map-node-relation");
-    relText.textContent = truncateText(item.relation, 14);
-    nodeGroup.appendChild(relText);
-
-    // Click / Touch Interaction: Open Bottom Sheet
-    nodeGroup.addEventListener("click", () => {
-      highlightMapEdge(index);
-      openBottomSheet(item);
+    btn.addEventListener("click", () => {
+      selectGraphNode(node, index);
     });
 
-    nodeGroup.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        highlightMapEdge(index);
-        openBottomSheet(item);
-      }
-    });
-
-    DOM.mapNodesLayer.appendChild(nodeGroup);
+    DOM.mapNodesLayer.appendChild(btn);
   });
-}
 
-function truncateText(text, maxChars) {
-  if (!text) return "";
-  return text.length > maxChars ? text.slice(0, maxChars - 1) + "…" : text;
-}
-
-function getTypeFillColor(type) {
-  const colors = {
-    person: "#FF9933",
-    scripture: "#E8B84B",
-    event: "#E55A5A",
-    tradition: "#AF7AC5",
-    place: "#38B2AC",
-    concept: "#4299E1"
-  };
-  return colors[type] || "#FF9933";
-}
-
-function highlightMapEdge(highlightIndex) {
-  const edges = DOM.mapEdgesLayer.querySelectorAll(".map-edge");
-  edges.forEach((edge, i) => {
-    edge.classList.toggle("highlighted", i === highlightIndex);
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Bottom Sheet Drawer
-// ---------------------------------------------------------------------------
-function openBottomSheet(item) {
-  STATE.activeSheetNode = item;
-  DOM.sheetNodeName.textContent = item.name;
-  DOM.sheetNodeType.textContent = item.type;
-  DOM.sheetNodeType.setAttribute("data-type", item.type);
-  DOM.sheetNodeRelation.textContent = item.relation;
-  DOM.sheetNodeSource.textContent = item.source || "Parampara / Scripture";
-
-  DOM.bottomSheetBackdrop.hidden = false;
-  DOM.nodeBottomSheet.hidden = false;
-}
-
-function closeBottomSheet() {
-  DOM.bottomSheetBackdrop.hidden = true;
-  DOM.nodeBottomSheet.hidden = true;
-  STATE.activeSheetNode = null;
-  const highlighted = DOM.mapEdgesLayer.querySelectorAll(".map-edge.highlighted");
-  highlighted.forEach(e => e.classList.remove("highlighted"));
-}
-
-// ---------------------------------------------------------------------------
-// Share & Copy Actions
-// ---------------------------------------------------------------------------
-async function handleShare() {
-  const t = I18N[STATE.lang] || I18N.hinglish;
-  const shareData = {
-    title: DOM.resTitle.textContent || "Dharma Setu",
-    text: DOM.resSummary.textContent || "Explore Hindu Dharma with authentic scriptures.",
-    url: window.location.href
-  };
-
-  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-    try {
-      await navigator.share(shareData);
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        copyToClipboard(window.location.href, t.toastCopied);
-      }
-    }
-  } else {
-    copyToClipboard(window.location.href, t.toastCopied);
+  // Select First Node by default
+  if (connectionsList.length > 0) {
+    selectGraphNode(connectionsList[0], 0);
   }
 }
 
-function handleCopySummary() {
-  const t = I18N[STATE.lang] || I18N.hinglish;
-  const title = DOM.resTitle.textContent;
-  const summary = DOM.resSummary.textContent;
-  const text = `${title} — Dharma Setu\n\n${summary}\n\nExplore: ${window.location.href}`;
-  copyToClipboard(text, t.toastSummaryCopied);
-}
+function selectGraphNode(node, index) {
+  STATE.activeGraphNode = node;
 
-function copyToClipboard(text, successMsg) {
-  navigator.clipboard.writeText(text)
-    .then(() => showToast(successMsg))
-    .catch(() => {
-      // Fallback
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      showToast(successMsg);
-    });
-}
-
-// ---------------------------------------------------------------------------
-// Event Listeners Setup
-// ---------------------------------------------------------------------------
-function initEventListeners() {
-  // Brand Logo -> Go Home
-  DOM.brandHomeBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    const url = new URL(window.location.href);
-    url.search = "";
-    window.history.pushState({}, "", url.toString());
-    showView("home");
+  // Highlight active node in DOM
+  DOM.mapNodesLayer.querySelectorAll(".graph-node-btn").forEach((btn, i) => {
+    btn.classList.toggle("active-node", i === index);
   });
+
+  // Highlight active SVG edge
+  DOM.mapEdgesLayer.querySelectorAll(".map-edge").forEach((edge, i) => {
+    edge.classList.toggle("highlighted", i === index);
+  });
+
+  // Update Bottom Sheet Card
+  DOM.cardTitle.innerHTML = `${node.name} <span class="text-[15px] font-medium text-[#6B6258]">${node.devanagari || ""}</span>`;
+  DOM.cardRelation.textContent = node.relation;
+  DOM.cardIcon.textContent = node.icon || "spa";
+  DOM.cardDescription.textContent = node.desc;
+  DOM.cardCitation.textContent = node.citation;
+
+  // Update Bookmark state for this relationship
+  const isBookmarked = STATE.bookmarks.some(b => b.title === `${STATE.currentData?.title || 'Topic'} & ${node.name}`);
+  DOM.cardBookmarkBtn.classList.toggle("saved", isBookmarked);
+  DOM.cardBookmarkIcon.textContent = isBookmarked ? "bookmark" : "bookmark_border";
+}
+
+function getNodeIconByType(type) {
+  switch (type) {
+    case "person": return "person";
+    case "scripture": return "menu_book";
+    case "event": return "event";
+    case "place": return "flag";
+    case "tradition": return "spa";
+    default: return "hub";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Screen 4: "Kab, kyun aur kaise" Timeline
+// ---------------------------------------------------------------------------
+function renderTimelineView(data) {
+  const topic = data.title || STATE.currentQuery;
+  let timelineItems = [];
+
+  // If searching Draupadi, use the curated chronological timeline
+  if (/draupadi|panchali/i.test(topic)) {
+    timelineItems = CURATED_DRAUPADI_DATA.timeline;
+  } else {
+    // Dynamically derive timeline from story milestones and real-life tradition
+    if (data.story && Array.isArray(data.story)) {
+      data.story.forEach((item, idx) => {
+        let phase = "is_kahani_mein";
+        if (idx === 0) phase = "pehle";
+        else if (idx === data.story.length - 1) phase = "baad_mein";
+
+        timelineItems.push({
+          phase,
+          era: data.type === "person" ? "Katha prasang" : "Itihas",
+          parva: item.tab || `Bhaag ${idx + 1}`,
+          title: item.tab || `Prasang ${idx + 1}`,
+          text: item.text,
+          kyun_hua: idx % 2 === 1 ? `Shastra katha ke anusaar dharmik siksha aur maryada sthapna.` : null
+        });
+      });
+    }
+    if (data.real_life) {
+      timelineItems.push({
+        phase: "parampara",
+        era: "Aaj ki parampara",
+        parva: "Living Tradition",
+        title: `${topic} ki Parampara aur Utsav`,
+        text: data.real_life,
+        cta: "Parampara ke baare mein vistar se jaanein"
+      });
+    }
+  }
+
+  DOM.timelineEventsContent.innerHTML = "";
+
+  // Group items by phase
+  const phases = [
+    { key: "pehle", label: "Pehle", isSaffron: false },
+    { key: "is_kahani_mein", label: "Is kahani mein", isSaffron: true },
+    { key: "baad_mein", label: "Baad mein", isSaffron: false },
+    { key: "parampara", label: "Living Heritage", isSaffron: true }
+  ];
+
+  phases.forEach(p => {
+    const itemsInPhase = timelineItems.filter(it => it.phase === p.key);
+    if (itemsInPhase.length === 0) return;
+
+    const group = document.createElement("div");
+    group.className = "timeline-phase-group";
+    group.id = `timeline-sec-${p.key === "is_kahani_mein" ? "iskahani" : p.key}`;
+
+    // Phase Header
+    group.innerHTML = `
+      <div class="timeline-phase-header">
+        <div class="phase-dot ${p.isSaffron ? "saffron" : ""}"></div>
+        <span class="phase-label-text ${p.isSaffron ? "saffron" : ""}">${p.label}</span>
+      </div>
+    `;
+
+    // Phase Events
+    itemsInPhase.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "timeline-event-row";
+
+      if (item.phase === "parampara") {
+        // Living Heritage Final Card
+        row.innerHTML = `
+          <div class="timeline-node-marker saffron">
+            <div class="node-circle-indicator">
+              <div class="node-inner-dot"></div>
+            </div>
+          </div>
+          <div class="living-tradition-card">
+            <span class="text-[13px] font-medium text-[#6B6258]">${item.era}</span>
+            <h3 class="event-title text-[18px]">${item.title}</h3>
+            <p class="event-narrative">${item.text}</p>
+            <button type="button" class="tradition-cta-btn" id="timeline-tradition-cta">
+              <span>${item.cta || "Vistar se jaanein"}</span>
+              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+          </div>
+        `;
+        const ctaBtn = row.querySelector("#timeline-tradition-cta");
+        if (ctaBtn) {
+          ctaBtn.addEventListener("click", () => {
+            fetchExplanation(item.title);
+          });
+        }
+      } else {
+        // Standard Event Card
+        let kyunHuaMarkup = "";
+        if (item.kyun_hua) {
+          kyunHuaMarkup = `
+            <div class="kyun-hua-box">
+              <span class="kyun-hua-label">Kyun hua</span>
+              <p class="kyun-hua-text">${item.kyun_hua}</p>
+            </div>
+          `;
+        }
+
+        row.innerHTML = `
+          <div class="timeline-node-marker ${p.isSaffron ? "saffron" : ""}">
+            <div class="node-circle-indicator">
+              <div class="node-inner-dot"></div>
+            </div>
+          </div>
+          <div class="timeline-event-card">
+            <div class="event-meta-row">
+              <span class="event-era-text">${item.era}</span>
+              <span class="event-parva-badge">${item.parva}</span>
+            </div>
+            <h3 class="event-title">${item.title}</h3>
+            <p class="event-narrative">${item.text}</p>
+            ${kyunHuaMarkup}
+          </div>
+        `;
+      }
+      group.appendChild(row);
+    });
+
+    DOM.timelineEventsContent.appendChild(group);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Draupadi Full Showcase Fallback (Guarantees Instant Demo Offline)
+// ---------------------------------------------------------------------------
+function renderDraupadiShowcase() {
+  const data = {
+    title: CURATED_DRAUPADI_DATA.title,
+    did_you_mean: ["Draupadi", "Panchali", "Yajnaseni"],
+    speech_text: "Draupadi is the central heroine of the Mahabharata, born from sacred yajna fire and revered for her steadfast dedication to dharma.",
+    type: "person",
+    summary: CURATED_DRAUPADI_DATA.summary,
+    story: CURATED_DRAUPADI_DATA.story,
+    sources: CURATED_DRAUPADI_DATA.sources,
+    real_life: CURATED_DRAUPADI_DATA.real_life,
+    traditions_differ: CURATED_DRAUPADI_DATA.traditions_differ,
+    connections: Object.values(CURATED_DRAUPADI_DATA.connections),
+    follow_ups: ["Who is Arjuna?", "What happened in Sabha Parva?", "What is Draupadi Amman?"],
+    confidence: "high"
+  };
+
+  STATE.currentData = data;
+  switchMainView("result");
+  switchResultTab("profile");
+  renderProfileView(data);
+  renderConnectionGraph(data);
+  renderTimelineView(data);
+
+  renderWikiPortrait({
+    found: true,
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Raja_Ravi_Varma_-_Mahabharata_-_Draupadi.jpg/800px-Raja_Ravi_Varma_-_Mahabharata_-_Draupadi.jpg",
+    pageUrl: "https://en.wikipedia.org/wiki/Draupadi"
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Voice Assistant (Sunao Narration & Hands-Free Conversation)
+// ---------------------------------------------------------------------------
+const VoiceAssistant = {
+  synth: window.speechSynthesis,
+  recognition: null,
+
+  init() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec) {
+      this.recognition = new SpeechRec();
+      this.recognition.continuous = false;
+      this.recognition.interimResults = true;
+
+      this.recognition.onstart = () => {
+        STATE.isListening = true;
+        DOM.homeMicBtn?.classList.add("listening");
+        DOM.stickyMicBtn?.classList.add("listening");
+        DOM.voiceModalBackdrop.hidden = false;
+        DOM.voiceModal.hidden = false;
+        DOM.voiceTranscript.textContent = "";
+      };
+
+      this.recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        DOM.voiceTranscript.textContent = transcript;
+        if (event.results[0].isFinal) {
+          setTimeout(() => {
+            this.stopListening();
+            fetchExplanation(transcript.trim());
+          }, 350);
+        }
+      };
+
+      this.recognition.onerror = (e) => {
+        console.warn("Speech recognition error:", e.error);
+        this.stopListening();
+      };
+
+      this.recognition.onend = () => {
+        this.stopListening();
+      };
+    }
+  },
+
+  startListening() {
+    if (!this.recognition) {
+      showToast(I18N[STATE.lang].voiceNotSupported);
+      return;
+    }
+    try {
+      this.recognition.lang = STATE.lang === "hi" ? "hi-IN" : "en-IN";
+      this.recognition.start();
+    } catch (err) {
+      console.warn("Start listening error:", err);
+    }
+  },
+
+  stopListening() {
+    STATE.isListening = false;
+    DOM.homeMicBtn?.classList.remove("listening");
+    DOM.stickyMicBtn?.classList.remove("listening");
+    DOM.voiceModalBackdrop.hidden = true;
+    DOM.voiceModal.hidden = true;
+    try {
+      this.recognition?.stop();
+    } catch (_) {}
+  },
+
+  speak(text) {
+    if (!this.synth) return;
+    this.stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = STATE.lang === "hi" ? "hi-IN" : "en-IN";
+    utterance.rate = 0.95;
+
+    utterance.onstart = () => {
+      STATE.isSpeaking = true;
+      this.updateUI(true);
+    };
+
+    utterance.onend = () => {
+      STATE.isSpeaking = false;
+      this.updateUI(false);
+      if (STATE.handsFreeMode) {
+        setTimeout(() => this.startListening(), 600);
+      }
+    };
+
+    utterance.onerror = () => {
+      STATE.isSpeaking = false;
+      this.updateUI(false);
+    };
+
+    this.synth.speak(utterance);
+  },
+
+  stopSpeaking() {
+    if (this.synth) {
+      this.synth.cancel();
+      STATE.isSpeaking = false;
+      this.updateUI(false);
+    }
+  },
+
+  toggleSpeech() {
+    if (STATE.isSpeaking) {
+      this.stopSpeaking();
+    } else {
+      const text = STATE.currentData?.speech_text || STATE.currentData?.summary || "";
+      if (text) this.speak(text);
+    }
+  },
+
+  updateUI(isSpeaking) {
+    DOM.iconSunaoPlay.hidden = isSpeaking;
+    DOM.iconSunaoStop.hidden = !isSpeaking;
+    DOM.audioWaveformBars.hidden = !isSpeaking;
+    DOM.uiSunaoBtnText.textContent = isSpeaking ? I18N[STATE.lang].rokoBtn : I18N[STATE.lang].sunaoBtn;
+    DOM.sunaoQuickIcon.textContent = isSpeaking ? "volume_off" : "volume_up";
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Helpers & Utilities
+// ---------------------------------------------------------------------------
+function addRecentSearch(topic) {
+  if (!topic) return;
+  STATE.recentSearches = [topic, ...STATE.recentSearches.filter(s => s.toLowerCase() !== topic.toLowerCase())].slice(0, 8);
+  localStorage.setItem("dharmasetu_recent", JSON.stringify(STATE.recentSearches));
+  renderRecentSearches();
+}
+
+function renderRecentSearches() {
+  if (STATE.recentSearches.length === 0) {
+    DOM.recentSearchesBox.hidden = true;
+    return;
+  }
+  DOM.recentChips.innerHTML = "";
+  STATE.recentSearches.forEach(term => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip-btn";
+    chip.textContent = term;
+    chip.addEventListener("click", () => fetchExplanation(term));
+    DOM.recentChips.appendChild(chip);
+  });
+  DOM.recentSearchesBox.hidden = false;
+}
+
+function updateBreadcrumbs() {
+  if (STATE.topicHistory.length > 0) {
+    const prev = STATE.topicHistory[STATE.topicHistory.length - 1];
+    DOM.breadcrumbPrevTopic.textContent = prev.title;
+    DOM.breadcrumbBar.hidden = false;
+  } else {
+    DOM.breadcrumbBar.hidden = true;
+  }
+}
+
+function startLoadingPhrases() {
+  const phrases = I18N[STATE.lang].loadingPhrases;
+  let idx = 0;
+  DOM.loadingPhrase.textContent = phrases[0];
+  STATE.loadingTimer = setInterval(() => {
+    idx = (idx + 1) % phrases.length;
+    DOM.loadingPhrase.textContent = phrases[idx];
+  }, 2400);
+}
+
+function showError(msg) {
+  switchMainView("error");
+  DOM.errorMessage.textContent = msg || I18N[STATE.lang].errorMsg;
+}
+
+// ---------------------------------------------------------------------------
+// Event Listeners & Bootstrapping
+// ---------------------------------------------------------------------------
+function initApp() {
+  applyTheme(STATE.theme);
+  applyLanguage(STATE.lang);
+  updateBookmarkBadge();
+  renderRecentSearches();
+  VoiceAssistant.init();
 
   // Theme Toggle
   DOM.themeToggleBtn.addEventListener("click", () => {
-    const nextTheme = STATE.theme === "dark" ? "light" : "dark";
-    applyTheme(nextTheme);
+    applyTheme(STATE.theme === "light" ? "dark" : "light");
   });
 
-  // Language Switcher Buttons
+  // Language Switch
   DOM.langBtns.forEach(btn => {
     btn.addEventListener("click", () => {
-      const selected = btn.dataset.lang;
-      if (selected !== STATE.lang) {
-        applyLanguage(selected);
-      }
+      applyLanguage(btn.dataset.lang);
     });
   });
 
-  // Home Search Form Submit
+  // Bookmarks Drawer
+  DOM.headerBookmarksBtn.addEventListener("click", openBookmarksDrawer);
+  DOM.bookmarksCloseBtn.addEventListener("click", closeBookmarksDrawer);
+  DOM.bookmarksBackdrop.addEventListener("click", closeBookmarksDrawer);
+
+  // Home Brand Back to Home
+  DOM.brandHomeBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    switchMainView("home");
+  });
+
+  // Home Search Submit
   DOM.homeSearchForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const q = DOM.homeSearchInput.value.trim();
     if (q) fetchExplanation(q);
   });
 
-  // Clear Input Button
-  DOM.homeSearchInput.addEventListener("input", () => {
-    DOM.homeClearBtn.hidden = !DOM.homeSearchInput.value;
-  });
   DOM.homeClearBtn.addEventListener("click", () => {
     DOM.homeSearchInput.value = "";
     DOM.homeClearBtn.hidden = true;
     DOM.homeSearchInput.focus();
   });
 
-  // Example Chips
-  DOM.exampleChips.addEventListener("click", (e) => {
-    const chip = e.target.closest(".chip-btn");
-    if (chip && chip.dataset.query) {
-      fetchExplanation(chip.dataset.query);
-    }
+  DOM.homeSearchInput.addEventListener("input", () => {
+    DOM.homeClearBtn.hidden = !DOM.homeSearchInput.value.trim();
   });
 
-  // Clear Recent Searches
+  // Example Chips
+  DOM.exampleChips.querySelectorAll(".chip-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      fetchExplanation(btn.dataset.query);
+    });
+  });
+
+  // Clear Recent
   DOM.clearRecentBtn.addEventListener("click", () => {
     STATE.recentSearches = [];
     localStorage.removeItem("dharmasetu_recent");
     renderRecentSearches();
   });
 
-  // Breadcrumb Back Button
-  DOM.breadcrumbBackBtn.addEventListener("click", () => {
+  // Result Back Button
+  DOM.resultBackBtn.addEventListener("click", () => {
     if (STATE.topicHistory.length > 0) {
       const prev = STATE.topicHistory.pop();
-      fetchExplanation(prev.q, null, true);
+      fetchExplanation(prev.q);
+    } else {
+      switchMainView("home");
     }
   });
 
-  // Sticky Bottom Search Form Submit
+  DOM.breadcrumbBackBtn.addEventListener("click", () => {
+    if (STATE.topicHistory.length > 0) {
+      const prev = STATE.topicHistory.pop();
+      fetchExplanation(prev.q);
+    }
+  });
+
+  DOM.resultSearchClearBtn.addEventListener("click", () => {
+    switchMainView("home");
+    DOM.homeSearchInput.focus();
+  });
+
+  // View Switcher Tabs (Parichay, Sambandh, Timeline)
+  DOM.viewTabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.target.replace("view-tab-", "");
+      switchResultTab(target);
+    });
+  });
+
+  // Quick In-Page Jumps
+  DOM.jumpToGraphBtn.addEventListener("click", () => switchResultTab("graph"));
+  DOM.jumpToTimelineBtn.addEventListener("click", () => switchResultTab("timeline"));
+
+  // Sunao Narration Buttons
+  DOM.sunaoBtn.addEventListener("click", () => VoiceAssistant.toggleSpeech());
+  DOM.sunaoQuickBtn.addEventListener("click", () => VoiceAssistant.toggleSpeech());
+
+  // Hands-Free Toggle
+  DOM.handsfreeToggleBtn.addEventListener("click", () => {
+    STATE.handsFreeMode = !STATE.handsFreeMode;
+    DOM.handsfreeToggleBtn.setAttribute("aria-pressed", STATE.handsFreeMode ? "true" : "false");
+    showToast(STATE.handsFreeMode ? I18N[STATE.lang].handsfreeOnToast : I18N[STATE.lang].handsfreeOffToast);
+    if (STATE.handsFreeMode && !STATE.isSpeaking) {
+      VoiceAssistant.startListening();
+    }
+  });
+
+  // Voice Mic Buttons
+  DOM.homeMicBtn.addEventListener("click", () => VoiceAssistant.startListening());
+  DOM.stickyMicBtn.addEventListener("click", () => VoiceAssistant.startListening());
+  DOM.voiceCancelBtn.addEventListener("click", () => VoiceAssistant.stopListening());
+
+  // Lightbox Modal
+  DOM.wikiImageBox.addEventListener("click", () => {
+    if (DOM.wikiThumbImg && !DOM.wikiThumbImg.hidden && DOM.wikiThumbImg.src) {
+      DOM.lightboxImg.src = DOM.wikiThumbImg.src;
+      DOM.lightboxCaption.textContent = STATE.currentData?.title || "Classical Painting";
+      DOM.lightboxBackdrop.hidden = false;
+      DOM.lightboxModal.hidden = false;
+    }
+  });
+  DOM.lightboxCloseBtn.addEventListener("click", () => {
+    DOM.lightboxBackdrop.hidden = true;
+    DOM.lightboxModal.hidden = true;
+  });
+  DOM.lightboxBackdrop.addEventListener("click", () => {
+    DOM.lightboxBackdrop.hidden = true;
+    DOM.lightboxModal.hidden = true;
+  });
+
+  // Graph Filter Chips (Sab, Log, Granth, Ghatna)
+  DOM.graphFilterBar.querySelectorAll(".filter-chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      DOM.graphFilterBar.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      const filter = btn.dataset.filter;
+      STATE.activeGraphFilter = filter;
+
+      DOM.mapNodesLayer.querySelectorAll(".graph-node-btn").forEach(nodeEl => {
+        const type = nodeEl.dataset.type;
+        const visible = filter === "all" || type === filter;
+        nodeEl.style.opacity = visible ? "1" : "0.2";
+        nodeEl.style.pointerEvents = visible ? "auto" : "none";
+      });
+    });
+  });
+
+  // Graph Zoom Controls
+  DOM.graphZoomInBtn.addEventListener("click", () => {
+    STATE.graphZoom = Math.min(STATE.graphZoom + 0.15, 1.45);
+    DOM.connectionSvg.style.transform = `scale(${STATE.graphZoom})`;
+    DOM.mapNodesLayer.style.transform = `scale(${STATE.graphZoom})`;
+  });
+  DOM.graphZoomOutBtn.addEventListener("click", () => {
+    STATE.graphZoom = Math.max(STATE.graphZoom - 0.15, 0.85);
+    DOM.connectionSvg.style.transform = `scale(${STATE.graphZoom})`;
+    DOM.mapNodesLayer.style.transform = `scale(${STATE.graphZoom})`;
+  });
+
+  // Connection Bottom Card CTA: Explore connection
+  DOM.cardExploreBtn.addEventListener("click", () => {
+    if (STATE.activeGraphNode) {
+      fetchExplanation(STATE.activeGraphNode.name, STATE.currentData?.title);
+    }
+  });
+
+  // Bookmark Connection Button
+  DOM.cardBookmarkBtn.addEventListener("click", () => {
+    if (!STATE.activeGraphNode) return;
+    const itemTitle = `${STATE.currentData?.title || 'Topic'} & ${STATE.activeGraphNode.name}`;
+    const idx = STATE.bookmarks.findIndex(b => b.title === itemTitle);
+
+    if (idx >= 0) {
+      STATE.bookmarks.splice(idx, 1);
+      showToast(I18N[STATE.lang].toastBookmarkRemoved);
+    } else {
+      STATE.bookmarks.push({
+        title: itemTitle,
+        subtitle: STATE.activeGraphNode.relation,
+        query: STATE.activeGraphNode.name
+      });
+      showToast(I18N[STATE.lang].toastBookmarkAdded);
+    }
+    localStorage.setItem("dharmasetu_bookmarks", JSON.stringify(STATE.bookmarks));
+    updateBookmarkBadge();
+    const isBookmarked = idx < 0;
+    DOM.cardBookmarkBtn.classList.toggle("saved", isBookmarked);
+    DOM.cardBookmarkIcon.textContent = isBookmarked ? "bookmark" : "bookmark_border";
+  });
+
+  // Sticky Bottom Search Form
   DOM.stickySearchForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const q = DOM.stickySearchInput.value.trim();
     if (q) fetchExplanation(q);
   });
 
-  // Bottom Sheet Close
-  DOM.sheetCloseBtn.addEventListener("click", closeBottomSheet);
-  DOM.bottomSheetBackdrop.addEventListener("click", closeBottomSheet);
-
-  // Bottom Sheet Explore Button
-  DOM.sheetExploreBtn.addEventListener("click", () => {
-    if (STATE.activeSheetNode) {
-      const targetQuery = STATE.activeSheetNode.name;
-      const context = DOM.resTitle.textContent;
-      closeBottomSheet();
-      fetchExplanation(targetQuery, context);
+  // Share & Copy
+  DOM.shareBtn.addEventListener("click", async () => {
+    const t = I18N[STATE.lang];
+    const shareData = {
+      title: DOM.resTitleMain.textContent || "Dharma Setu",
+      text: DOM.resSummary.textContent || "Sanatana Gyan, Shastra Pramaan",
+      url: window.location.href
+    };
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== "AbortError") copyToClipboard(window.location.href, t.toastCopied);
+      }
+    } else {
+      copyToClipboard(window.location.href, t.toastCopied);
     }
   });
 
-  // Retry Button on Error View
+  DOM.copySummaryBtn.addEventListener("click", () => {
+    const text = `${DOM.resTitleMain.textContent}\n\n${DOM.resSummary.textContent}\n\nVia Dharma Setu`;
+    copyToClipboard(text, I18N[STATE.lang].toastSummaryCopied);
+  });
+
+  // Retry on error
   DOM.retryBtn.addEventListener("click", () => {
-    if (STATE.currentQuery) {
-      fetchExplanation(STATE.currentQuery);
-    } else {
-      showView("home");
-    }
-  });
-
-  // Share & Copy Actions
-  DOM.shareBtn.addEventListener("click", handleShare);
-  DOM.copySummaryBtn.addEventListener("click", handleCopySummary);
-
-  // Voice Assistant Controls (Phase C)
-  if (DOM.sunaoBtn) {
-    DOM.sunaoBtn.addEventListener("click", () => VoiceAssistant.toggleSunao());
-  }
-  if (DOM.handsfreeToggleBtn) {
-    DOM.handsfreeToggleBtn.addEventListener("click", () => VoiceAssistant.toggleHandsFree());
-  }
-  if (DOM.homeMicBtn) {
-    DOM.homeMicBtn.addEventListener("click", () => VoiceAssistant.startListening(false));
-  }
-  if (DOM.stickyMicBtn) {
-    DOM.stickyMicBtn.addEventListener("click", () => VoiceAssistant.startListening(false));
-  }
-  if (DOM.voiceCancelBtn) {
-    DOM.voiceCancelBtn.addEventListener("click", () => VoiceAssistant.stopListening());
-  }
-  if (DOM.voiceModalBackdrop) {
-    DOM.voiceModalBackdrop.addEventListener("click", () => VoiceAssistant.stopListening());
-  }
-
-  // Wikipedia Thumbnail Lightbox Trigger
-  if (DOM.wikiImageBox) {
-    const triggerLightbox = () => {
-      if (!DOM.wikiThumbImg.hidden && DOM.wikiThumbImg.src) {
-        openLightbox(DOM.wikiThumbImg.src, DOM.wikiTitle.textContent);
-      }
-    };
-    DOM.wikiImageBox.addEventListener("click", triggerLightbox);
-    DOM.wikiImageBox.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        triggerLightbox();
-      }
-    });
-  }
-
-  // Lightbox Close Handlers
-  if (DOM.lightboxCloseBtn) {
-    DOM.lightboxCloseBtn.addEventListener("click", closeLightbox);
-  }
-  if (DOM.lightboxBackdrop) {
-    DOM.lightboxBackdrop.addEventListener("click", closeLightbox);
-  }
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && DOM.lightboxModal && !DOM.lightboxModal.hidden) {
-      closeLightbox();
-    }
-  });
-
-  // Browser Navigation History (PopState)
-  window.addEventListener("popstate", (e) => {
-    const url = new URL(window.location.href);
-    const q = url.searchParams.get("q");
-    const lang = url.searchParams.get("lang");
-
-    if (lang && lang !== STATE.lang) {
-      applyLanguage(lang);
-    }
-
-    if (q) {
-      fetchExplanation(q, null, true);
-    } else {
-      showView("home");
-    }
+    if (STATE.currentQuery) fetchExplanation(STATE.currentQuery);
   });
 }
 
-// ---------------------------------------------------------------------------
-// Ambient Particle Canvas Engine (Aarti Embers & Constellation Web)
-// ---------------------------------------------------------------------------
-const CanvasEngine = {
-  canvas: null,
-  ctx: null,
-  particles: [],
-  maxParticles: 42,
-  width: 0,
-  height: 0,
-  dpr: 1,
-  rafId: null,
-  mouse: { x: -1000, y: -1000, active: false },
-  reducedMotion: false,
-
-  init() {
-    this.canvas = document.getElementById("ambient-canvas");
-    if (!this.canvas) return;
-    this.ctx = this.canvas.getContext("2d");
-    if (!this.ctx) return;
-
-    this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    this.resize();
-    this.createParticles();
-    this.bindEvents();
-
-    if (!this.reducedMotion) {
-      this.start();
-    } else {
-      this.drawStatic();
-    }
-  },
-
-  resize() {
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
-    this.canvas.width = this.width * this.dpr;
-    this.canvas.height = this.height * this.dpr;
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.scale(this.dpr, this.dpr);
-  },
-
-  createParticles() {
-    this.particles = [];
-    const count = this.width < 600 ? 28 : this.maxParticles;
-    for (let i = 0; i < count; i++) {
-      this.particles.push({
-        x: Math.random() * this.width,
-        y: Math.random() * this.height,
-        radius: Math.random() * 2.2 + 0.8,
-        vy: -(Math.random() * 0.45 + 0.22),
-        baseVx: (Math.random() - 0.5) * 0.25,
-        alpha: Math.random() * 0.45 + 0.2,
-        baseAlpha: Math.random() * 0.45 + 0.2,
-        phase: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.01,
-        hue: Math.floor(Math.random() * 15 + 35) // warm gold / amber (35 - 50)
-      });
-    }
-  },
-
-  bindEvents() {
-    window.addEventListener("resize", () => {
-      this.resize();
-      this.createParticles();
-    }, { passive: true });
-
-    window.addEventListener("pointermove", (e) => {
-      this.mouse.x = e.clientX;
-      this.mouse.y = e.clientY;
-      this.mouse.active = true;
-    }, { passive: true });
-
-    window.addEventListener("pointerleave", () => {
-      this.mouse.active = false;
-      this.mouse.x = -1000;
-      this.mouse.y = -1000;
-    }, { passive: true });
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        this.stop();
-      } else if (!this.reducedMotion) {
-        this.start();
-      }
-    });
-
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    mql.addEventListener("change", (e) => {
-      this.reducedMotion = e.matches;
-      if (this.reducedMotion) {
-        this.stop();
-        this.drawStatic();
-      } else {
-        this.start();
-      }
-    });
-  },
-
-  start() {
-    if (this.rafId) cancelAnimationFrame(this.rafId);
-    const loop = () => {
-      this.updateAndDraw();
-      this.rafId = requestAnimationFrame(loop);
-    };
-    this.rafId = requestAnimationFrame(loop);
-  },
-
-  stop() {
-    if (this.rafId) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
-  },
-
-  drawStatic() {
-    if (!this.ctx) return;
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    for (const p of this.particles) {
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      this.ctx.fillStyle = `hsla(${p.hue}, 95%, 65%, ${p.alpha * 0.35})`;
-      this.ctx.fill();
-    }
-  },
-
-  updateAndDraw() {
-    this.ctx.clearRect(0, 0, this.width, this.height);
-
-    const isResult = !DOM.resultView.hidden;
-
-    // Constellation lines connecting nearby embers on result view
-    if (isResult) {
-      const maxDist = 72;
-      const pLen = this.particles.length;
-      this.ctx.lineWidth = 0.6;
-      for (let i = 0; i < pLen; i++) {
-        for (let j = i + 1; j < pLen; j++) {
-          const dx = this.particles[i].x - this.particles[j].x;
-          const dy = this.particles[i].y - this.particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < maxDist) {
-            const lineAlpha = (1 - dist / maxDist) * 0.15;
-            this.ctx.strokeStyle = `rgba(232, 184, 75, ${lineAlpha})`;
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
-            this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
-            this.ctx.stroke();
-          }
-        }
-      }
-    }
-
-    // Update and draw embers
-    for (const p of this.particles) {
-      p.phase += p.pulseSpeed;
-      p.x += p.baseVx + Math.sin(p.phase) * 0.35;
-      p.y += p.vy;
-
-      // Mouse attraction
-      if (this.mouse.active) {
-        const mdx = this.mouse.x - p.x;
-        const mdy = this.mouse.y - p.y;
-        const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
-        if (mDist < 120 && mDist > 4) {
-          p.x += (mdx / mDist) * 0.55;
-          p.y += (mdy / mDist) * 0.55;
-        }
-      }
-
-      // Recycle when rising off the screen
-      if (p.y < -12) {
-        p.y = this.height + 12;
-        p.x = Math.random() * this.width;
-      }
-      if (p.x < -12) p.x = this.width + 12;
-      if (p.x > this.width + 12) p.x = -12;
-
-      // Dynamic glowing aarti ember
-      const currentAlpha = p.baseAlpha + Math.sin(p.phase) * 0.15;
-      const clampedAlpha = Math.max(0.08, Math.min(0.7, currentAlpha));
-
-      const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 2.6);
-      grad.addColorStop(0, `hsla(${p.hue}, 100%, 75%, ${clampedAlpha})`);
-      grad.addColorStop(1, `hsla(${p.hue}, 90%, 55%, 0)`);
-
-      this.ctx.fillStyle = grad;
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.radius * 2.6, 0, Math.PI * 2);
-      this.ctx.fill();
-
-      // Core particle
-      this.ctx.fillStyle = `hsla(${p.hue}, 100%, 88%, ${Math.min(1, clampedAlpha + 0.25)})`;
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.radius * 0.85, 0, Math.PI * 2);
-      this.ctx.fill();
-    }
-  }
-};
-
-// ---------------------------------------------------------------------------
-// Mandala Parallax & Tilt Effect
-// ---------------------------------------------------------------------------
-const MandalaParallax = {
-  wrap: null,
-  targetX: 0,
-  targetY: 0,
-  currentX: 0,
-  currentY: 0,
-  rafId: null,
-
-  init() {
-    this.wrap = document.getElementById("mandala-parallax-wrap");
-    if (!this.wrap) return;
-
-    // Desktop pointer movement
-    window.addEventListener("pointermove", (e) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      this.targetX = ((e.clientX - cx) / cx) * 20; // +/- 20px
-      this.targetY = ((e.clientY - cy) / cy) * 14; // +/- 14px
-    }, { passive: true });
-
-    // Mobile gyroscope / device orientation tilt
-    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== "function") {
-      window.addEventListener("deviceorientation", (e) => {
-        if (e.gamma !== null && e.beta !== null) {
-          this.targetX = Math.max(-24, Math.min(24, e.gamma * 0.6));
-          this.targetY = Math.max(-18, Math.min(18, (e.beta - 45) * 0.5));
-        }
-      }, { passive: true });
-    }
-
-    this.animate();
-  },
-
-  animate() {
-    this.currentX += (this.targetX - this.currentX) * 0.08;
-    this.currentY += (this.targetY - this.currentY) * 0.08;
-
-    if (this.wrap) {
-      this.wrap.style.transform = `translateX(calc(-50% + ${this.currentX.toFixed(2)}px)) translateY(${this.currentY.toFixed(2)}px)`;
-    }
-
-    this.rafId = requestAnimationFrame(() => this.animate());
-  }
-};
-
-// ---------------------------------------------------------------------------
-// Tap / Click Tactile Ripple Effect
-// ---------------------------------------------------------------------------
-function initRippleEffect() {
-  document.addEventListener("pointerdown", (e) => {
-    const btn = e.target.closest(".ripple-effect");
-    if (!btn) return;
-
-    const rect = btn.getBoundingClientRect();
-    const circle = document.createElement("span");
-    const diameter = Math.max(rect.width, rect.height);
-    const radius = diameter / 2;
-
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${e.clientX - rect.left - radius}px`;
-    circle.style.top = `${e.clientY - rect.top - radius}px`;
-    circle.classList.add("ripple-circle");
-
-    const existing = btn.querySelector(".ripple-circle");
-    if (existing) existing.remove();
-
-    btn.appendChild(circle);
-    setTimeout(() => circle.remove(), 620);
+function copyToClipboard(text, successToast) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(successToast);
+  }).catch(() => {
+    showToast(successToast);
   });
 }
 
-// ---------------------------------------------------------------------------
-// Voice Assistant Engine (SpeechSynthesis, SpeechRecognition, Hands-Free)
-// ---------------------------------------------------------------------------
-const VoiceAssistant = {
-  recognition: null,
-  isListening: false,
-  isSpeaking: false,
-  finalTranscript: "",
-
-  init() {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        try { window.speechSynthesis.getVoices(); } catch (e) {}
-      };
-      try { window.speechSynthesis.getVoices(); } catch (e) {}
-    }
-  },
-
-  // --- Speech Synthesis ("Sunao") ---
-  speak(text, onFinished = null) {
-    if (!("speechSynthesis" in window)) {
-      showToast(I18N[STATE.lang].voiceNotSupported);
-      return;
-    }
-
-    if (!text || typeof text !== "string") return;
-
-    // Cancel recognition and current speech
-    this.stopListening();
-    try { window.speechSynthesis.cancel(); } catch (e) {}
-
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    // Voice selection
-    const voices = window.speechSynthesis.getVoices() || [];
-    let selectedVoice = null;
-
-    if (STATE.lang === "hi" || STATE.lang === "hinglish") {
-      selectedVoice = voices.find(v => v.lang.startsWith("hi")) ||
-                      voices.find(v => v.lang === "en-IN") ||
-                      voices[0];
-    } else {
-      selectedVoice = voices.find(v => v.lang === "en-IN") ||
-                      voices.find(v => v.lang.startsWith("en-")) ||
-                      voices[0];
-    }
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-
-    utterance.onstart = () => {
-      this.isSpeaking = true;
-      STATE.isSpeaking = true;
-      this.updateSunaoUI(true);
-    };
-
-    utterance.onend = () => {
-      this.isSpeaking = false;
-      STATE.isSpeaking = false;
-      this.updateSunaoUI(false);
-      if (typeof onFinished === "function") {
-        onFinished();
-      } else if (STATE.handsFreeMode && !DOM.resultView.hidden) {
-        // Hands-Free Prompt: Prompt user to ask next question!
-        setTimeout(() => {
-          if (STATE.handsFreeMode && !DOM.resultView.hidden) {
-            this.startListening(true);
-          }
-        }, 800);
-      }
-    };
-
-    utterance.onerror = (e) => {
-      console.warn("Speech synthesis error:", e);
-      this.isSpeaking = false;
-      STATE.isSpeaking = false;
-      this.updateSunaoUI(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  },
-
-  stopSpeaking() {
-    if ("speechSynthesis" in window) {
-      try { window.speechSynthesis.cancel(); } catch (e) {}
-    }
-    this.isSpeaking = false;
-    STATE.isSpeaking = false;
-    this.updateSunaoUI(false);
-  },
-
-  toggleSunao() {
-    if (this.isSpeaking) {
-      this.stopSpeaking();
-    } else {
-      const textToSpeak = STATE.currentData?.speech_text || STATE.currentData?.summary || "";
-      if (textToSpeak) {
-        this.speak(textToSpeak);
-      }
-    }
-  },
-
-  updateSunaoUI(playing) {
-    if (!DOM.sunaoBtn) return;
-    DOM.sunaoBtn.classList.toggle("playing", playing);
-    if (DOM.iconSunaoPlay) DOM.iconSunaoPlay.hidden = playing;
-    if (DOM.iconSunaoStop) DOM.iconSunaoStop.hidden = !playing;
-    if (DOM.audioWaveformBars) DOM.audioWaveformBars.hidden = !playing;
-    const t = I18N[STATE.lang] || I18N.hinglish;
-    if (DOM.uiSunaoBtnText) {
-      DOM.uiSunaoBtnText.textContent = playing ? t.rokoBtn : t.sunaoBtn;
-    }
-  },
-
-  // --- Speech Recognition ("Ask by Voice") ---
-  startListening(isHandsFree = false) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      showToast(I18N[STATE.lang].voiceNotSupported);
-      if (isHandsFree) this.setHandsFree(false);
-      return;
-    }
-
-    this.stopSpeaking();
-
-    if (this.isListening && this.recognition) {
-      try { this.recognition.abort(); } catch (e) {}
-    }
-
-    try {
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = false;
-      this.recognition.interimResults = true;
-
-      if (STATE.lang === "hi") {
-        this.recognition.lang = "hi-IN";
-      } else if (STATE.lang === "hinglish") {
-        this.recognition.lang = "hi-IN";
-      } else {
-        this.recognition.lang = "en-IN";
-      }
-
-      this.finalTranscript = "";
-      const t = I18N[STATE.lang] || I18N.hinglish;
-
-      if (DOM.voiceStatusText) DOM.voiceStatusText.textContent = t.listeningTitle;
-      if (DOM.voiceHintText) DOM.voiceHintText.textContent = t.listeningHint;
-      if (DOM.voiceTranscript) DOM.voiceTranscript.textContent = "";
-
-      if (DOM.voiceModal) DOM.voiceModal.hidden = false;
-      if (DOM.voiceModalBackdrop) DOM.voiceModalBackdrop.hidden = false;
-
-      this.recognition.onstart = () => {
-        this.isListening = true;
-        STATE.isListening = true;
-        DOM.homeMicBtn?.classList.add("listening");
-        DOM.stickyMicBtn?.classList.add("listening");
-      };
-
-      this.recognition.onresult = (event) => {
-        let interim = "";
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            this.finalTranscript += event.results[i][0].transcript;
-          } else {
-            interim += event.results[i][0].transcript;
-          }
-        }
-        const display = this.finalTranscript || interim;
-        if (DOM.voiceTranscript) DOM.voiceTranscript.textContent = display;
-      };
-
-      this.recognition.onerror = (event) => {
-        console.warn("Speech recognition error:", event.error);
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          showToast(t.voicePermissionDenied);
-        }
-      };
-
-      this.recognition.onend = () => {
-        this.isListening = false;
-        STATE.isListening = false;
-        DOM.homeMicBtn?.classList.remove("listening");
-        DOM.stickyMicBtn?.classList.remove("listening");
-        this.closeVoiceModal();
-
-        const cleanTranscript = this.finalTranscript.trim();
-        if (cleanTranscript) {
-          DOM.homeSearchInput.value = cleanTranscript;
-          DOM.stickySearchInput.value = cleanTranscript;
-          fetchExplanation(cleanTranscript);
-        }
-      };
-
-      this.recognition.start();
-    } catch (err) {
-      console.error("SpeechRecognition start error:", err);
-      this.closeVoiceModal();
-      showToast(I18N[STATE.lang].voiceNotSupported);
-    }
-  },
-
-  stopListening() {
-    if (this.recognition && this.isListening) {
-      try { this.recognition.stop(); } catch (e) {}
-    }
-    this.closeVoiceModal();
-  },
-
-  closeVoiceModal() {
-    this.isListening = false;
-    STATE.isListening = false;
-    if (DOM.voiceModal) DOM.voiceModal.hidden = true;
-    if (DOM.voiceModalBackdrop) DOM.voiceModalBackdrop.hidden = true;
-    DOM.homeMicBtn?.classList.remove("listening");
-    DOM.stickyMicBtn?.classList.remove("listening");
-  },
-
-  // --- Hands-Free Conversation Mode ---
-  toggleHandsFree() {
-    this.setHandsFree(!STATE.handsFreeMode);
-  },
-
-  setHandsFree(enabled) {
-    STATE.handsFreeMode = enabled;
-    const t = I18N[STATE.lang] || I18N.hinglish;
-
-    if (DOM.handsfreeToggleBtn) {
-      DOM.handsfreeToggleBtn.classList.toggle("active", enabled);
-      DOM.handsfreeToggleBtn.setAttribute("aria-pressed", enabled ? "true" : "false");
-    }
-
-    if (enabled) {
-      showToast(t.handsfreeOnToast);
-      if (!DOM.resultView.hidden && STATE.currentData) {
-        const text = STATE.currentData.speech_text || STATE.currentData.summary;
-        this.speak(text);
-      } else {
-        this.startListening(true);
-      }
-    } else {
-      showToast(t.handsfreeOffToast);
-      this.stopSpeaking();
-      this.stopListening();
-    }
-  }
-};
-
-// ---------------------------------------------------------------------------
-// App Bootstrapping
-// ---------------------------------------------------------------------------
-function initApp() {
-  applyTheme(STATE.theme);
-  applyLanguage(STATE.lang);
-  renderRecentSearches();
-  initEventListeners();
-  initRippleEffect();
-  CanvasEngine.init();
-  MandalaParallax.init();
-  VoiceAssistant.init();
-
-  // Check URL on initial load for shareable link (?q=Ram&lang=hinglish)
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialQ = urlParams.get("q");
-  const initialLang = urlParams.get("lang");
-
-  if (initialLang && I18N[initialLang]) {
-    applyLanguage(initialLang);
-  }
-
-  if (initialQ) {
-    DOM.homeSearchInput.value = initialQ;
-    fetchExplanation(initialQ);
-  } else {
-    showView("home");
-  }
+// Kick off when DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
 }
-
-document.addEventListener("DOMContentLoaded", initApp);

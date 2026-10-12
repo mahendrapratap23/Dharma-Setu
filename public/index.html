@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="hi-Latn" data-theme="dark">
+<html lang="hi-Latn" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>Dharma Setu — Hindu Dharma Explorer</title>
   
   <!-- Primary Meta Tags -->
@@ -10,7 +10,7 @@
   <meta name="description" content="AI-powered explorer for Hindu Dharma. Authentic scriptural citations, stories, interactive connection maps, and daily traditions.">
   <meta name="keywords" content="Hindu Dharma, Ramayana, Mahabharata, Bhagavad Gita, Puranas, Vedas, Sanatana Dharma, Hindu Philosophy, Temples">
   <meta name="author" content="Dharma Setu">
-  <meta name="theme-color" content="#0F1226">
+  <meta name="theme-color" content="#FFF8EC">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -19,64 +19,29 @@
   <meta property="og:description" content="Authentic Hindu Dharma explorer backed by scriptures, interactive connection maps, and Gemini AI.">
   <meta property="og:image" content="/favicon.svg">
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:title" content="Dharma Setu — Hindu Dharma Explorer">
-  <meta property="twitter:description" content="Authentic Hindu Dharma explorer backed by scriptures, interactive connection maps, and Gemini AI.">
-
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
-  <!-- Google Fonts: Tiro Devanagari Hindi, Noto Sans Devanagari, Poppins -->
+  <!-- Google Fonts: Noto Serif Devanagari, Noto Serif, Noto Sans Devanagari, Noto Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Serif+Devanagari:wght@500;600;700&family=Noto+Serif:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/style.css">
-
-  <!-- =========================================================================
-       Cloudflare Turnstile Bot Protection (Hook Point - Optional)
-       To activate Turnstile:
-       1. In Cloudflare Dashboard: Go to Turnstile -> Add Widget.
-       2. Uncomment the <script> below and insert your sitekey into data-sitekey.
-       3. Pass the resulting cf-turnstile-response token in POST /api/explain.
-       ========================================================================= -->
-  <!-- <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script> -->
 </head>
 <body>
-  <!-- Ambient Interactive Canvas & Aarti Glow Background -->
-  <canvas id="ambient-canvas" class="ambient-canvas" aria-hidden="true"></canvas>
-  <div class="aarti-glow" id="aarti-glow" aria-hidden="true"></div>
-  <div class="mandala-parallax-wrap" id="mandala-parallax-wrap" aria-hidden="true">
-    <svg class="mandala-sacred-svg" id="mandala-sacred-svg" viewBox="0 0 600 600" width="600" height="600">
-      <circle cx="300" cy="300" r="280" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.3"/>
-      <circle cx="300" cy="300" r="240" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.4"/>
-      <circle cx="300" cy="300" r="190" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.45"/>
-      <circle cx="300" cy="300" r="140" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
-      <circle cx="300" cy="300" r="85" fill="none" stroke="currentColor" stroke-width="2" opacity="0.6"/>
-      <!-- Sacred 12 Petals -->
-      <g opacity="0.35">
-        <path d="M300 20 C320 120 320 180 300 215 C280 180 280 120 300 20 Z" fill="currentColor"/>
-        <path d="M300 385 C320 420 320 480 300 580 C280 480 280 420 300 385 Z" fill="currentColor"/>
-        <path d="M20 300 C120 320 180 320 215 300 C180 280 120 280 20 300 Z" fill="currentColor"/>
-        <path d="M385 300 C420 320 480 320 580 300 C480 280 420 280 385 300 Z" fill="currentColor"/>
-        <path d="M102 102 C172 172 215 215 240 240 C215 215 172 172 102 102 Z" stroke="currentColor" stroke-width="2"/>
-        <path d="M498 102 C428 172 385 215 360 240 C385 215 428 172 498 102 Z" stroke="currentColor" stroke-width="2"/>
-        <path d="M102 498 C172 428 215 385 240 360 C215 385 172 428 102 498 Z" stroke="currentColor" stroke-width="2"/>
-        <path d="M498 498 C428 428 385 385 360 360 C385 385 428 428 498 498 Z" stroke="currentColor" stroke-width="2"/>
-      </g>
-    </svg>
-  </div>
 
-  <!-- Header -->
+  <!-- Top Application Header -->
   <header class="app-header" role="banner">
     <div class="header-container">
       <a href="/" class="brand-link" id="brand-home-btn" aria-label="Dharma Setu Home">
+        <!-- Clean Bridge Arch holding Diya flame -->
         <span class="brand-icon" aria-hidden="true">
-          <svg class="diya-mini" viewBox="0 0 32 32" width="28" height="28" fill="none">
-            <path d="M6 20 C7 26 25 26 26 20 C23 22 9 22 6 20 Z" fill="#E8B84B"/>
-            <path d="M16 5 C18 10 20 14 18 17 C17 19 14 19 13 17 C12 14 14 10 16 5 Z" fill="#FF9933"/>
-            <circle cx="16" cy="14" r="2.5" fill="#FFF"/>
+          <svg class="diya-bridge-logo" viewBox="0 0 80 80" width="34" height="34" fill="none">
+            <path d="M40 18 C43.2 24.5 45.5 28.5 45.5 33 C45.5 36.6 43 39.5 40 39.5 C37 39.5 34.5 36.6 34.5 33 C34.5 28.5 36.8 24.5 40 18 Z" fill="#FF9933"/>
+            <circle cx="40" cy="34" fill="#2B1A0A" opacity="0.85" r="2.5"/>
+            <path d="M18 50 C26 38 34 35 40 35 C46 35 54 38 62 50" stroke="#FF9933" stroke-linecap="round" stroke-width="5"/>
           </svg>
         </span>
         <div class="brand-text">
@@ -86,29 +51,23 @@
       </a>
 
       <div class="header-actions">
+        <!-- Saved Bookmarks Button -->
+        <button type="button" class="header-action-btn" id="header-bookmarks-btn" aria-label="Saved Bookmarks" title="Saved Bookmarks">
+          <span class="material-symbols-outlined icon-symbol">bookmark_border</span>
+          <span class="bookmark-badge" id="bookmark-badge" hidden>0</span>
+        </button>
+
         <!-- Language Switcher -->
         <div class="lang-switch-group" role="group" aria-label="Language selection">
-          <button type="button" class="lang-btn active ripple-effect" data-lang="hinglish" id="lang-hinglish" aria-pressed="true">Hinglish</button>
-          <button type="button" class="lang-btn ripple-effect" data-lang="hi" id="lang-hi" aria-pressed="false">हिंदी</button>
-          <button type="button" class="lang-btn ripple-effect" data-lang="en" id="lang-en" aria-pressed="false">English</button>
+          <button type="button" class="lang-btn active" data-lang="hinglish" id="lang-hinglish" aria-pressed="true">Hinglish</button>
+          <button type="button" class="lang-btn" data-lang="hi" id="lang-hi" aria-pressed="false">हिंदी</button>
+          <button type="button" class="lang-btn" data-lang="en" id="lang-en" aria-pressed="false">English</button>
         </div>
 
         <!-- Theme Toggle -->
-        <button type="button" class="theme-toggle-btn ripple-effect" id="theme-toggle-btn" aria-label="Toggle color theme" title="Toggle theme">
-          <svg class="theme-icon icon-sun" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
-          <svg class="theme-icon icon-moon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-          </svg>
+        <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle color theme" title="Toggle theme">
+          <span class="material-symbols-outlined icon-symbol icon-sun">light_mode</span>
+          <span class="material-symbols-outlined icon-symbol icon-moon">dark_mode</span>
         </button>
       </div>
     </div>
@@ -117,116 +76,127 @@
   <!-- Main View Container -->
   <main class="main-content" id="main-content" role="main">
     
-    <!-- 1. HOME SECTION -->
+    <!-- =========================================================================
+         1. MINIMAL HOME SECTION (Screen 1: dharma_setu_minimal_home_light)
+         ========================================================================= -->
     <section class="view-section home-section" id="home-view">
-      <div class="home-hero">
-        <div class="mandala-badge floating-badge" aria-hidden="true">
-          <span class="om-symbol">🕉️</span>
-          <div class="badge-halo"></div>
-        </div>
-        <h1 class="home-headline animated-gradient-headline" id="ui-home-heading">Sanatana Gyan, Shastra Pramaan</h1>
-        <p class="home-subheading" id="ui-home-desc">Granthon ke aadhar par pramanik uttar, kathaayein aur sambandh.</p>
-      </div>
-
-      <!-- Main Search Bar -->
-      <form class="search-form" id="home-search-form" role="search" aria-label="Search Hindu Dharma">
-        <div class="search-input-wrapper">
-          <svg class="search-lens" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input
-            type="search"
-            class="search-input"
-            id="home-search-input"
-            name="q"
-            maxlength="200"
-            autocomplete="off"
-            placeholder="Poochhein: Ram, Krishna, Ekadashi..."
-            aria-label="Poochhein sawal ya vishay"
-            required
-          />
-          <button type="button" class="clear-input-btn" id="home-clear-btn" aria-label="Clear search" hidden>✕</button>
-          
-          <!-- Mic Button (Phase B visual + Phase C hook) -->
-          <button type="button" class="mic-btn ripple-effect" id="home-mic-btn" aria-label="Search by voice" title="Voice Search">
-            <svg class="mic-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" y1="19" x2="12" y2="23"></line>
-              <line x1="8" y1="23" x2="16" y2="23"></line>
+      <div class="home-container">
+        <!-- 1. App Logo & Brand Title -->
+        <div class="home-hero">
+          <div class="home-diya-hero" aria-hidden="true">
+            <svg class="diya-hero-svg" viewBox="0 0 80 80" width="80" height="80" fill="none">
+              <!-- Diya Flame -->
+              <path d="M40 18 C43.2 24.5 45.5 28.5 45.5 33 C45.5 36.6 43 39.5 40 39.5 C37 39.5 34.5 36.6 34.5 33 C34.5 28.5 36.8 24.5 40 18 Z" fill="#FF9933"/>
+              <!-- Flame Core -->
+              <circle cx="40" cy="34" fill="#2B1A0A" opacity="0.85" r="2.5"/>
+              <!-- Bridge Arch Holding Diya -->
+              <path d="M18 50 C26 38 34 35 40 35 C46 35 54 38 62 50" stroke="#FF9933" stroke-linecap="round" stroke-width="5"/>
             </svg>
-            <span class="mic-pulse"></span>
-          </button>
-
-          <button type="submit" class="search-submit-btn ripple-effect" id="home-submit-btn" aria-label="Submit Search">
-            <span class="btn-text" id="ui-search-btn-text">Khojein</span>
-            <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </button>
+          </div>
+          <h1 class="home-headline font-serif" id="ui-home-heading">धर्म सेतु</h1>
+          <p class="home-subheading" id="ui-home-desc">Sanatana Gyan, Shastra Pramaan</p>
         </div>
-        <!-- Turnstile Widget Hook Point (Uncomment when sitekey is configured):
-        <div id="cf-turnstile-container" class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITEKEY" style="margin-top: 12px; display: flex; justify-content: center;"></div>
-        -->
-      </form>
 
-      <!-- Suggested Example Chips -->
-      <div class="chips-container" aria-label="Example topics">
-        <span class="chips-label" id="ui-examples-label">Udaharan:</span>
-        <div class="chips-row" id="example-chips">
-          <button type="button" class="chip-btn" data-query="Ram">Ram</button>
-          <button type="button" class="chip-btn" data-query="Krishna">Krishna</button>
-          <button type="button" class="chip-btn" data-query="Hanuman">Hanuman</button>
-          <button type="button" class="chip-btn" data-query="Mahadev">Mahadev</button>
-          <button type="button" class="chip-btn" data-query="Ekadashi">Ekadashi</button>
-          <button type="button" class="chip-btn" data-query="Diwali">Diwali</button>
-          <button type="button" class="chip-btn chip-question" data-query="Kya Krishna Ramayan mein hain?">Kya Krishna Ramayan mein hain?</button>
-        </div>
-      </div>
+        <!-- 2. Clean Flat Search Pill -->
+        <form class="search-form" id="home-search-form" role="search" aria-label="Search Hindu Dharma">
+          <div class="search-input-pill">
+            <span class="search-pill-lens" aria-hidden="true">
+              <span class="material-symbols-outlined text-[20px]">search</span>
+            </span>
+            <input
+              type="search"
+              class="search-input"
+              id="home-search-input"
+              name="q"
+              maxlength="200"
+              autocomplete="off"
+              placeholder="Ram, Krishna, Draupadi, Ekadashi..."
+              aria-label="Poochhein sawal ya vishay"
+              required
+            />
+            <button type="button" class="clear-input-btn" id="home-clear-btn" aria-label="Clear search" hidden>✕</button>
+            
+            <!-- Mic Voice Button (min 48px tap target) -->
+            <button type="button" class="mic-btn" id="home-mic-btn" aria-label="Search by voice" title="Voice Search">
+              <span class="material-symbols-outlined text-[20px]">mic</span>
+              <span class="mic-pulse"></span>
+            </button>
 
-      <!-- Recent Searches -->
-      <div class="recent-searches-wrapper" id="recent-searches-box" hidden>
-        <div class="recent-header">
-          <span class="recent-title" id="ui-recent-title">Haal hi mein dekha gaya</span>
-          <button type="button" class="clear-recent-btn" id="clear-recent-btn">Saaf karein</button>
+            <!-- Solid Saffron Circular Action Button (min 48px tap target) -->
+            <button type="submit" class="search-submit-btn" id="home-submit-btn" aria-label="Submit Search">
+              <svg class="w-5 h-5 text-[#2B1A0A]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        <!-- Suggested Example Chips -->
+        <div class="chips-container" aria-label="Example topics">
+          <span class="chips-label" id="ui-examples-label">Udaharan:</span>
+          <div class="chips-row" id="example-chips">
+            <button type="button" class="chip-btn" data-query="Draupadi">Draupadi</button>
+            <button type="button" class="chip-btn" data-query="Ram">Ram</button>
+            <button type="button" class="chip-btn" data-query="Krishna">Krishna</button>
+            <button type="button" class="chip-btn" data-query="Hanuman">Hanuman</button>
+            <button type="button" class="chip-btn" data-query="Ekadashi">Ekadashi</button>
+            <button type="button" class="chip-btn" data-query="Diwali">Diwali</button>
+            <button type="button" class="chip-btn chip-question" data-query="Ayodhya">Ayodhya</button>
+          </div>
         </div>
-        <div class="chips-row" id="recent-chips"></div>
+
+        <!-- Recent Searches -->
+        <div class="recent-searches-wrapper" id="recent-searches-box" hidden>
+          <div class="recent-header">
+            <span class="recent-title" id="ui-recent-title">Haal hi mein dekha gaya</span>
+            <button type="button" class="clear-recent-btn" id="clear-recent-btn">Saaf karein</button>
+          </div>
+          <div class="chips-row" id="recent-chips"></div>
+        </div>
       </div>
     </section>
 
-    <!-- 2. LOADING STATE -->
+    <!-- =========================================================================
+         2. LOADING STATE
+         ========================================================================= -->
     <section class="view-section loading-section" id="loading-view" hidden aria-live="polite">
-      <div class="diya-loader">
-        <div class="diya-aura"></div>
-        <svg class="diya-flame-svg" viewBox="0 0 64 64" width="80" height="80">
-          <path class="flame-body" d="M32 8 C36 18 42 26 38 34 C35 39 29 39 26 34 C22 26 28 18 32 8 Z" fill="#FF9933"/>
-          <path class="flame-inner" d="M32 16 C34 22 36 26 34 30 C33 32 31 32 30 30 C28 26 30 22 32 16 Z" fill="#FFE066"/>
-          <path class="diya-bowl" d="M12 38 C14 52 50 52 52 38 C44 42 20 42 12 38 Z" fill="#E8B84B"/>
-        </svg>
-      </div>
-      <p class="loading-phrase" id="loading-phrase">Shastron se pramanik khoj jaari hai...</p>
-      
-      <!-- Skeleton Cards for Realistic Perceived Performance -->
-      <div class="skeleton-container" aria-hidden="true">
-        <div class="skeleton-card hero-skeleton">
-          <div class="sk-line sk-title"></div>
-          <div class="sk-line sk-badge"></div>
-          <div class="sk-line sk-text"></div>
-          <div class="sk-line sk-text short"></div>
+      <div class="loading-container">
+        <div class="diya-loader">
+          <div class="diya-aura"></div>
+          <svg class="diya-flame-svg" viewBox="0 0 80 80" width="70" height="70" fill="none">
+            <path d="M40 18 C43.2 24.5 45.5 28.5 45.5 33 C45.5 36.6 43 39.5 40 39.5 C37 39.5 34.5 36.6 34.5 33 C34.5 28.5 36.8 24.5 40 18 Z" fill="#FF9933"/>
+            <circle cx="40" cy="34" fill="#2B1A0A" opacity="0.85" r="2.5"/>
+            <path d="M18 50 C26 38 34 35 40 35 C46 35 54 38 62 50" stroke="#FF9933" stroke-linecap="round" stroke-width="5"/>
+          </svg>
         </div>
-        <div class="skeleton-card">
-          <div class="sk-line sk-title-sm"></div>
-          <div class="sk-line sk-text"></div>
+        <p class="loading-phrase" id="loading-phrase">Shastron se pramanik khoj jaari hai...</p>
+        
+        <!-- Flat Skeletons -->
+        <div class="skeleton-container" aria-hidden="true">
+          <div class="skeleton-card photo-skeleton"></div>
+          <div class="skeleton-card profile-skeleton">
+            <div class="sk-line sk-title"></div>
+            <div class="sk-line sk-badge"></div>
+            <div class="sk-line sk-text"></div>
+            <div class="sk-line sk-text short"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="sk-line sk-title-sm"></div>
+            <div class="sk-line sk-text"></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. ERROR STATE -->
+    <!-- =========================================================================
+         3. ERROR STATE
+         ========================================================================= -->
     <section class="view-section error-section" id="error-view" hidden role="alert">
       <div class="error-card">
-        <div class="error-icon" aria-hidden="true">🔔</div>
+        <div class="error-icon" aria-hidden="true">
+          <span class="material-symbols-outlined text-[36px] text-[#B45309]">info</span>
+        </div>
         <h2 class="error-title" id="error-title">Kripya kshama karein</h2>
         <p class="error-message" id="error-message">Jawab laane mein thodi der ho rahi hai. Kripya punah prayas karein.</p>
         <button type="button" class="retry-btn" id="retry-btn">
@@ -235,126 +205,72 @@
       </div>
     </section>
 
-    <!-- 4. RESULT SECTION -->
+    <!-- =========================================================================
+         4. RESULT & MULTI-VIEW SECTION (Screens 2, 3, 4)
+         ========================================================================= -->
     <section class="view-section result-section" id="result-view" hidden>
-      <!-- Breadcrumb Bar -->
-      <div class="nav-breadcrumbs" id="breadcrumb-bar" hidden>
-        <button type="button" class="breadcrumb-back-btn" id="breadcrumb-back-btn" aria-label="Go back to previous topic">
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <span id="breadcrumb-back-text">Peeche:</span>
-          <strong id="breadcrumb-prev-topic"></strong>
-        </button>
+      
+      <!-- Top Sticky App Bar for Search Result -->
+      <div class="result-sticky-header" id="result-sticky-header">
+        <div class="result-header-inner">
+          <!-- Back Arrow Button (min 48px tap target) -->
+          <button aria-label="Go back" class="header-back-btn" id="result-back-btn" type="button">
+            <span class="material-symbols-outlined text-[22px]">arrow_back</span>
+          </button>
+
+          <!-- Compact Search Pill with current query -->
+          <div class="result-search-pill" id="result-search-pill">
+            <span class="material-symbols-outlined text-[18px] text-[#6B6258] flex-shrink-0">search</span>
+            <span class="result-search-query-text" id="result-search-query-text">Draupadi</span>
+            <button aria-label="Clear search" class="result-search-clear-btn" id="result-search-clear-btn" type="button">
+              <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+
+          <!-- Quick Audio Action (Sunao / Narration) -->
+          <button type="button" class="header-action-btn sunao-quick-btn" id="sunao-quick-btn" aria-label="Listen" title="Sunao">
+            <span class="material-symbols-outlined text-[20px]" id="sunao-quick-icon">volume_up</span>
+          </button>
+        </div>
+
+        <!-- 3-Tab Segment Navigation (Parichay, Sambandh Graph, Timeline) -->
+        <nav class="view-switcher-bar" aria-label="Topic Views" id="view-switcher-bar">
+          <button type="button" class="view-tab-btn active" id="tab-btn-profile" data-target="view-tab-profile">
+            <span class="material-symbols-outlined text-[18px]">person</span>
+            <span>Parichay</span>
+          </button>
+          <button type="button" class="view-tab-btn" id="tab-btn-graph" data-target="view-tab-graph">
+            <span class="material-symbols-outlined text-[18px]">hub</span>
+            <span>Sambandh</span>
+          </button>
+          <button type="button" class="view-tab-btn" id="tab-btn-timeline" data-target="view-tab-timeline">
+            <span class="material-symbols-outlined text-[18px]">timeline</span>
+            <span>Timeline</span>
+          </button>
+        </nav>
       </div>
 
-      <!-- Result Stacked Cards -->
-      <div class="result-cards-stack">
-        
-        <!-- SKELETON: Wikipedia Card Loading -->
-        <div class="result-card wiki-card-skeleton" id="card-wiki-skeleton" hidden aria-hidden="true">
-          <div class="wiki-skeleton-header">
-            <div class="sk-line sk-wiki-badge"></div>
-          </div>
-          <div class="wiki-skeleton-body">
-            <div class="sk-box sk-wiki-thumb"></div>
-            <div class="sk-wiki-lines">
-              <div class="sk-line sk-title-sm"></div>
-              <div class="sk-line sk-text"></div>
-              <div class="sk-line sk-text short"></div>
-            </div>
-          </div>
+      <!-- Result Content Area -->
+      <div class="result-content-container">
+
+        <!-- Breadcrumb Bar (when navigating from relations) -->
+        <div class="nav-breadcrumbs" id="breadcrumb-bar" hidden>
+          <button type="button" class="breadcrumb-back-btn" id="breadcrumb-back-btn" aria-label="Go back to previous topic">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span id="breadcrumb-back-text">Peeche:</span>
+            <strong id="breadcrumb-prev-topic"></strong>
+          </button>
         </div>
 
-        <!-- CARD 0: WIKIPEDIA (HYBRID GROUNDING CARD) -->
-        <article class="result-card wiki-card" id="card-wiki" hidden>
-          <div class="wiki-card-header">
-            <div class="wiki-source-badge">
-              <svg class="wiki-w-logo" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                <path d="M12.09 13.123l2.156-6.195h2.055l-3.342 9.072h-1.84L8.71 9.87l-2.41 6.13H4.46L1.12 7h2.054l2.156 6.123L7.74 7h1.94l2.41 6.123z"/>
-              </svg>
-              <span class="wiki-source-label" id="ui-wiki-source-label">Wikipedia ke anusaar</span>
-              <span class="wiki-lang-pill" id="wiki-lang-pill" hidden>HI</span>
-            </div>
-          </div>
+        <!-- ===================================================================
+             VIEW TAB 1: PARICHAY (PROFILE) (Screen 2: draupadi_search_result)
+             =================================================================== -->
+        <div class="view-tab-pane active" id="view-tab-profile">
 
-          <div class="wiki-card-content">
-            <!-- Media Section (Image or Mandala Placeholder) -->
-            <div class="wiki-media-wrap" id="wiki-media-wrap">
-              <div class="wiki-image-box" id="wiki-image-box" role="button" tabindex="0" aria-label="View larger image">
-                <img id="wiki-thumb-img" class="wiki-thumb-img" src="" alt="" loading="lazy" hidden />
-                <div class="wiki-mandala-placeholder" id="wiki-mandala-placeholder" hidden>
-                  <svg viewBox="0 0 100 100" class="mandala-svg" aria-hidden="true">
-                    <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.6"/>
-                    <circle cx="50" cy="50" r="34" stroke="currentColor" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="3,3"/>
-                    <circle cx="50" cy="50" r="22" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.5"/>
-                    <path d="M50 6 L50 94 M6 50 L94 50 M19 19 L81 81 M19 81 L81 19" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                    <circle cx="50" cy="50" r="8" fill="currentColor" opacity="0.8"/>
-                    <polygon points="50,14 58,36 82,36 63,50 70,72 50,58 30,72 37,50 18,36 42,36" stroke="currentColor" stroke-width="1" fill="none" opacity="0.5"/>
-                  </svg>
-                </div>
-                <span class="wiki-zoom-badge" id="wiki-zoom-badge" title="Tap to zoom" hidden>
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    <line x1="11" y1="8" x2="11" y2="14"></line>
-                    <line x1="8" y1="11" x2="14" y2="11"></line>
-                  </svg>
-                </span>
-              </div>
-            </div>
-
-            <!-- Text & Link Section -->
-            <div class="wiki-text-wrap">
-              <h3 class="wiki-title" id="wiki-title"></h3>
-              <p class="wiki-extract" id="wiki-extract"></p>
-              <div class="wiki-meta-row">
-                <a class="wiki-read-link" id="wiki-read-link" href="#" target="_blank" rel="noopener noreferrer">
-                  <span id="ui-wiki-read-more">Read more on Wikipedia</span>
-                  <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="wiki-credit-footer">
-            <span class="wiki-credit-text">Text/image: Wikipedia (CC BY-SA) / Wikimedia Commons</span>
-          </div>
-        </article>
-
-        <!-- SKELETON: AI Cards Loading (Shown while /api/explain is pending) -->
-        <div class="result-card ai-skeleton-card" id="card-ai-skeleton" hidden aria-hidden="true">
-          <div class="ai-skeleton-header">
-            <div class="sk-line sk-ai-badge"></div>
-            <div class="sk-line sk-title"></div>
-          </div>
-          <div class="sk-line sk-text"></div>
-          <div class="sk-line sk-text"></div>
-          <div class="sk-line sk-text short"></div>
-          <div class="ai-skeleton-pills">
-            <div class="sk-line sk-pill"></div>
-            <div class="sk-line sk-pill"></div>
-          </div>
-        </div>
-
-        <!-- CARD 1: HERO -->
-        <article class="result-card hero-card" id="card-hero">
-          <!-- AI Source Label -->
-          <div class="ai-source-badge-wrap">
-            <span class="ai-source-badge">
-              <span class="ai-source-dot"></span>
-              <span class="ai-source-text" id="ui-ai-source-label">Dharma Setu AI</span>
-            </span>
-          </div>
-
-          <!-- Interpreted as & Did you mean -->
+          <!-- Interpreted as & Did you mean (Misspelling resolution) -->
           <div class="interpreted-box" id="res-interpreted-box" hidden>
             <div class="interpreted-line">
-              <span class="interpreted-icon" aria-hidden="true">💡</span>
+              <span class="material-symbols-outlined text-[18px] text-[#B45309]">lightbulb</span>
               <span class="interpreted-label" id="ui-interpreted-label">Maine samjha:</span>
               <strong class="interpreted-query" id="res-interpreted-as"></strong>
             </div>
@@ -364,138 +280,306 @@
             </div>
           </div>
 
-          <div class="hero-top-row">
-            <h2 class="hero-title" id="res-title"></h2>
-            <span class="type-badge" id="res-type-badge"></span>
+          <!-- SKELETON: Wikipedia / Media Loading -->
+          <div class="result-card wiki-card-skeleton" id="card-wiki-skeleton" hidden aria-hidden="true">
+            <div class="sk-box h-[220px] rounded-2xl mb-2"></div>
+            <div class="sk-line sk-title-sm"></div>
+            <div class="sk-line sk-text"></div>
           </div>
-          <p class="hero-summary" id="res-summary"></p>
 
-          <!-- Voice Narration "Sunao" & Hands-Free Audio Control Bar -->
-          <div class="audio-control-bar" id="audio-control-bar">
-            <button type="button" class="sunao-btn ripple-effect" id="sunao-btn" aria-label="Sunao (Voice Narration)">
-              <span class="sunao-icon" id="sunao-icon">
-                <svg class="icon-play" id="icon-sunao-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          <!-- 1. Classical Portrait Photo (Screen 2: 220px height, rounded-2xl, Wikimedia Commons) -->
+          <section class="photo-card-wrap" id="card-wiki" hidden>
+            <div class="portrait-photo-box" id="wiki-image-box" role="button" tabindex="0" aria-label="View larger image">
+              <img id="wiki-thumb-img" class="portrait-photo-img" src="" alt="Classical portrait painting" loading="lazy" hidden />
+              <div class="wiki-mandala-placeholder" id="wiki-mandala-placeholder" hidden>
+                <svg viewBox="0 0 100 100" class="mandala-svg" aria-hidden="true">
+                  <circle cx="50" cy="50" r="44" stroke="#D9C9AE" stroke-width="1.5" fill="none" opacity="0.8"/>
+                  <circle cx="50" cy="50" r="34" stroke="#FF9933" stroke-width="1" fill="none" stroke-dasharray="3,3"/>
+                  <circle cx="50" cy="50" r="22" stroke="#D9C9AE" stroke-width="1.5" fill="none"/>
+                  <circle cx="50" cy="50" r="8" fill="#FF9933"/>
                 </svg>
-                <svg class="icon-stop" id="icon-sunao-stop" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" hidden>
-                  <rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect>
-                </svg>
+              </div>
+              <span class="photo-zoom-badge" id="wiki-zoom-badge" title="Tap to zoom" hidden>
+                <span class="material-symbols-outlined text-[16px]">zoom_in</span>
               </span>
-              <span class="sunao-text" id="ui-sunao-btn-text">Sunao</span>
-              <span class="audio-waveform-bars" id="audio-waveform-bars" aria-hidden="true" hidden>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-                <span class="wave-bar"></span>
-              </span>
+            </div>
+            <p class="photo-caption-text">
+              <span id="wiki-photo-caption">Image: Wikimedia Commons</span>
+              <a class="wiki-read-link ml-2 text-[#B45309] hover:underline" id="wiki-read-link" href="#" target="_blank" rel="noopener noreferrer">
+                <span id="ui-wiki-read-more">Read on Wikipedia</span>
+              </a>
+            </p>
+          </section>
+
+          <!-- SKELETON: AI Cards Loading -->
+          <div class="result-card ai-skeleton-card" id="card-ai-skeleton" hidden aria-hidden="true">
+            <div class="sk-line sk-title"></div>
+            <div class="sk-line sk-text"></div>
+            <div class="sk-line sk-text"></div>
+            <div class="sk-line sk-text short"></div>
+          </div>
+
+          <!-- 2. Main Profile Card (Screen 2: Title, Devanagari, Vyakti badge, Summary, Story Tabs) -->
+          <article class="result-card profile-card" id="card-hero">
+            <!-- Header Row: Title & Badge -->
+            <div class="profile-card-header">
+              <h2 class="profile-title" id="res-title">
+                <span id="res-title-main"></span>
+                <span class="profile-title-devanagari font-normal text-[#6B6258]" id="res-title-devanagari"></span>
+              </h2>
+              <span class="type-badge" id="res-type-badge">Vyakti</span>
+            </div>
+
+            <!-- 3-line Summary Extract -->
+            <p class="profile-summary-text" id="res-summary"></p>
+
+            <!-- Horizontal Story / Milestone Chips (Tabs) -->
+            <div class="milestones-nav-wrap" id="card-story" hidden>
+              <nav aria-label="Story Milestones" class="story-tabs-nav no-scrollbar" id="story-tabs-nav" role="tablist">
+                <!-- Dynamically generated chips: Janm, Vivah, Sabha Parv, Seekh etc. -->
+              </nav>
+              <!-- Selected Tab Content Box -->
+              <div class="story-tab-content-box" id="story-tab-content" role="tabpanel" tabindex="0"></div>
+            </div>
+
+            <!-- Voice Narration & Audio Control Bar -->
+            <div class="audio-control-bar" id="audio-control-bar">
+              <button type="button" class="sunao-btn" id="sunao-btn" aria-label="Sunao (Voice Narration)">
+                <span class="sunao-icon" id="sunao-icon">
+                  <span class="material-symbols-outlined text-[20px]" id="icon-sunao-play">play_arrow</span>
+                  <span class="material-symbols-outlined text-[20px]" id="icon-sunao-stop" hidden>stop</span>
+                </span>
+                <span class="sunao-text" id="ui-sunao-btn-text">Sunao</span>
+                <span class="audio-waveform-bars" id="audio-waveform-bars" aria-hidden="true" hidden>
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar"></span>
+                </span>
+              </button>
+
+              <button type="button" class="handsfree-toggle-btn" id="handsfree-toggle-btn" aria-pressed="false" title="Hands-free conversation mode">
+                <span class="material-symbols-outlined text-[18px]">mic</span>
+                <span class="handsfree-label" id="ui-handsfree-text">Hands-Free</span>
+                <span class="handsfree-status-dot" id="handsfree-status-dot"></span>
+              </button>
+            </div>
+
+            <div class="low-confidence-notice" id="res-low-confidence" hidden>
+              <span class="material-symbols-outlined text-[16px]">info</span>
+              <span id="ui-low-conf-text">Is jawab ko shastron se khud verify karein.</span>
+            </div>
+          </article>
+
+          <!-- 3. Granthon mein Card (Screen 2: Structured Scripture Citations) -->
+          <article class="result-card sources-card" id="card-sources">
+            <div class="card-header">
+              <span class="material-symbols-outlined text-[20px] text-[#B45309]">menu_book</span>
+              <h3 class="card-title" id="ui-sources-title">Granthon mein</h3>
+            </div>
+            <ul class="sources-list" id="res-sources-list"></ul>
+          </article>
+
+          <!-- 4. Real life mein Card (Screen 2: Living Practice & Moral Guidance) -->
+          <article class="result-card real-life-card" id="card-real-life">
+            <div class="card-header">
+              <span class="material-symbols-outlined text-[20px] text-[#FF9933]">spa</span>
+              <h3 class="card-title" id="ui-reallife-title">Real life mein</h3>
+            </div>
+            <p class="card-body-text" id="res-real-life"></p>
+          </article>
+
+          <!-- 5. Traditions Differ (Where traditions diverge) -->
+          <article class="result-card traditions-card" id="card-traditions" hidden>
+            <div class="card-header">
+              <span class="material-symbols-outlined text-[20px] text-[#B45309]">balance</span>
+              <h3 class="card-title" id="ui-traditions-title">Paramparaon mein bhed</h3>
+            </div>
+            <p class="card-body-text" id="res-traditions"></p>
+          </article>
+
+          <!-- Bottom View Link Triggers (Direct buttons to Connection Map and Timeline) -->
+          <section class="profile-quick-nav-actions" aria-label="Explore connections and timeline">
+            <button type="button" class="quick-nav-action-btn" id="jump-to-graph-btn">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px] text-[#FF9933]">hub</span>
+                <span>Neeche dekhein: Connection map</span>
+              </div>
+              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
+            <button type="button" class="quick-nav-action-btn" id="jump-to-timeline-btn">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px] text-[#B45309]">timeline</span>
+                <span>Kab, kyun aur kaise: Timeline</span>
+              </div>
+              <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+          </section>
 
-            <button type="button" class="handsfree-toggle-btn ripple-effect" id="handsfree-toggle-btn" aria-pressed="false" title="Hands-free conversation mode">
-              <svg class="handsfree-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" y1="19" x2="12" y2="23"></line>
-                <line x1="8" y1="23" x2="16" y2="23"></line>
-              </svg>
-              <span class="handsfree-label" id="ui-handsfree-text">Hands-Free</span>
-              <span class="handsfree-status-dot" id="handsfree-status-dot"></span>
+          <!-- 6. Follow-up Questions -->
+          <article class="result-card followups-card" id="card-followups" hidden>
+            <div class="card-header">
+              <span class="material-symbols-outlined text-[20px] text-[#FF9933]">explore</span>
+              <h3 class="card-title" id="ui-followups-title">Aage ke sawal</h3>
+            </div>
+            <div class="followup-chips-row" id="res-followups-list"></div>
+          </article>
+
+          <!-- Share & Copy Action Row -->
+          <div class="result-action-bar">
+            <button type="button" class="action-btn share-btn" id="share-btn">
+              <span class="material-symbols-outlined text-[18px]">share</span>
+              <span id="ui-share-btn-text">Share karein</span>
+            </button>
+            <button type="button" class="action-btn copy-btn" id="copy-summary-btn">
+              <span class="material-symbols-outlined text-[18px]">content_copy</span>
+              <span id="ui-copy-btn-text">Copy karein</span>
             </button>
           </div>
 
-          <div class="low-confidence-notice" id="res-low-confidence" hidden>
-            <span class="notice-icon" aria-hidden="true">ℹ️</span>
-            <span id="ui-low-conf-text">Is jawab ko shastron se khud verify karein.</span>
-          </div>
-        </article>
+        </div>
 
-        <!-- CARD 2: STORY TABS (OPTIONAL) -->
-        <article class="result-card story-card" id="card-story" hidden>
-          <div class="card-header">
-            <h3 class="card-title" id="ui-story-title">Katha vistar</h3>
+        <!-- ===================================================================
+             VIEW TAB 2: KAUN KAUN JUDA HAI (Screen 3: connection_graph)
+             =================================================================== -->
+        <div class="view-tab-pane" id="view-tab-graph">
+          
+          <div class="graph-page-header">
+            <h2 class="text-[24px] font-bold text-[#2B2118] tracking-tight">Kaun kaun juda hai</h2>
+            <p class="text-[14px] text-[#6B6258] mt-1" id="graph-subtitle">
+              Draupadi se jude log, ghatnayein aur pavitra granth
+            </p>
           </div>
-          <div class="story-tabs-nav" id="story-tabs-nav" role="tablist"></div>
-          <div class="story-tab-content" id="story-tab-content" role="tabpanel" tabindex="0"></div>
-        </article>
 
-        <!-- CARD 3: CONNECTION MAP -->
-        <article class="result-card connection-card" id="card-connections" hidden>
-          <div class="card-header map-header">
-            <div>
-              <h3 class="card-title" id="ui-map-title">Sambandh Naksha</h3>
-              <p class="card-subtitle" id="ui-map-subtitle">Kisi bhi vishay par tap karke uske bare mein jaanein</p>
+          <!-- Filter Chips Row (Sab, Log, Granth, Ghatna) -->
+          <div class="graph-filter-bar no-scrollbar" id="graph-filter-bar" role="group" aria-label="Filter connections">
+            <button class="filter-chip active" data-filter="all" type="button" id="filter-chip-all">
+              Sab (<span id="filter-count-all">8</span>)
+            </button>
+            <button class="filter-chip" data-filter="person" type="button" id="filter-chip-person">
+              <span class="material-symbols-outlined text-[16px]">person</span>
+              Log (<span id="filter-count-person">5</span>)
+            </button>
+            <button class="filter-chip" data-filter="scripture" type="button" id="filter-chip-scripture">
+              <span class="material-symbols-outlined text-[16px]">menu_book</span>
+              Granth (<span id="filter-count-scripture">1</span>)
+            </button>
+            <button class="filter-chip" data-filter="event" type="button" id="filter-chip-event">
+              <span class="material-symbols-outlined text-[16px]">event</span>
+              Ghatna (<span id="filter-count-event">1</span>)
+            </button>
+          </div>
+
+          <!-- Interactive Orbit Graph Canvas -->
+          <div class="graph-viewport" id="graph-viewport">
+            <svg class="graph-svg" id="connection-svg" viewBox="0 0 390 390" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Interactive relation orbit graph">
+              <!-- Concentric circular orbit lines -->
+              <circle cx="195" cy="195" r="140" fill="none" stroke="#E5DAC5" stroke-dasharray="3 3" stroke-width="1"></circle>
+              <circle cx="195" cy="195" r="85" fill="none" stroke="#E5DAC5" stroke-dasharray="2 2" stroke-width="1"></circle>
+              
+              <!-- SVG Connector Lines Layer -->
+              <g id="map-edges-layer"></g>
+            </svg>
+
+            <!-- Center Node (Saffron Circle with character title) -->
+            <div class="center-node-box" id="graph-center-node">
+              <div class="center-node-circle">
+                <span class="center-node-title font-bold text-[#2B1A0A]" id="graph-center-title">Draupadi</span>
+                <span class="center-node-devanagari text-[11px] text-[#2B1A0A]" id="graph-center-devanagari">(द्रौपदी)</span>
+              </div>
+            </div>
+
+            <!-- Surrounding Interactive Nodes Layer (HTML buttons for crisp rendering & accessibility) -->
+            <div class="radial-nodes-container" id="map-nodes-layer">
+              <!-- Generated dynamically by app.js -->
+            </div>
+
+            <!-- Zoom Controls -->
+            <aside aria-label="Graph controls" class="graph-zoom-controls">
+              <button aria-label="Zoom in" class="zoom-btn" id="graph-zoom-in-btn" type="button">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+              </button>
+              <button aria-label="Zoom out" class="zoom-btn" id="graph-zoom-out-btn" type="button">
+                <span class="material-symbols-outlined text-[20px]">remove</span>
+              </button>
+            </aside>
+          </div>
+
+          <!-- Bottom Sheet Card: Selected Node Details -->
+          <div class="connection-bottom-card" id="connection-bottom-card">
+            <div class="connection-card-header">
+              <div class="flex items-center gap-3">
+                <div class="node-icon-box" id="card-icon-container">
+                  <span class="material-symbols-outlined text-[20px]" id="card-icon">spa</span>
+                </div>
+                <div>
+                  <h3 class="text-[18px] font-bold text-[#2B2118] leading-tight" id="card-title">
+                    Krishna <span class="text-[15px] font-medium text-[#6B6258]" id="card-devanagari">(श्रीकृष्ण)</span>
+                  </h3>
+                  <p class="text-[13px] text-[#6B6258] mt-0.5" id="card-relation">Sakha aur rakshak</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connection Description -->
+            <p class="text-[17px] text-[#2B2118] mt-4 leading-[1.6]" id="card-description">
+              Govinda answered her silent prayer during Sabha Parva; their bond transcended mortal friendship as divine protector (Sakha) honoring absolute surrender (Sharanagati).
+            </p>
+
+            <!-- Scripture Citation Link -->
+            <div class="citation-row">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="material-symbols-outlined text-[16px] text-[#6B6258]">menu_book</span>
+                <a class="citation-link truncate text-[#B45309] hover:underline font-medium" href="#" id="card-citation">
+                  Mahabharat, Sabha Parva (Shloka 68)
+                </a>
+              </div>
+              <span class="material-symbols-outlined text-[18px] text-[#6B6258]">chevron_right</span>
+            </div>
+
+            <!-- Action Buttons: Explore connection & Bookmark -->
+            <div class="connection-actions-row">
+              <button class="connection-explore-btn" id="card-explore-btn" type="button">
+                <span class="material-symbols-outlined text-[20px]">explore</span>
+                <span>Inka sambandh padhein</span>
+              </button>
+              <button aria-label="Bookmark relationship" class="connection-bookmark-btn" id="card-bookmark-btn" type="button">
+                <span class="material-symbols-outlined text-[20px]" id="card-bookmark-icon">bookmark_border</span>
+              </button>
             </div>
           </div>
+
+        </div>
+
+        <!-- ===================================================================
+             VIEW TAB 3: KAB, KYUN AUR KAISE (Screen 4: draupadi_timeline)
+             =================================================================== -->
+        <div class="view-tab-pane" id="view-tab-timeline">
           
-          <!-- Interactive SVG Map -->
-          <div class="svg-map-wrapper">
-            <svg class="connection-svg" id="connection-svg" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Interactive relation network graph">
-              <defs>
-                <filter id="node-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur"/>
-                  <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                </filter>
-              </defs>
-              <g id="map-edges-layer"></g>
-              <g id="map-nodes-layer"></g>
-            </svg>
-          </div>
-        </article>
+          <div class="timeline-page-header">
+            <h2 class="text-[26px] font-bold text-[#2B2118] tracking-tight leading-snug">Kab, kyun aur kaise</h2>
+            <p class="text-[17px] text-[#6B6258] leading-[1.6] mt-1">
+              Is kahani se pehle aur baad mein kya hua
+            </p>
 
-        <!-- CARD 4: SCRIPTURE SOURCES ("Granthon mein") -->
-        <article class="result-card sources-card" id="card-sources">
-          <div class="card-header">
-            <span class="header-icon" aria-hidden="true">📜</span>
-            <h3 class="card-title" id="ui-sources-title">Granthon mein (Pramaan)</h3>
+            <!-- Jump Navigation Filter Chips -->
+            <nav class="timeline-jump-chips no-scrollbar" aria-label="Timeline Phases">
+              <a class="jump-chip" href="#timeline-sec-pehle" id="jump-pehle">Pehle</a>
+              <a class="jump-chip active" href="#timeline-sec-iskahani" id="jump-iskahani">Is kahani mein</a>
+              <a class="jump-chip" href="#timeline-sec-baad" id="jump-baad">Baad mein</a>
+              <a class="jump-chip" href="#timeline-sec-parampara" id="jump-parampara">Parampara</a>
+            </nav>
           </div>
-          <ul class="sources-list" id="res-sources-list"></ul>
-        </article>
 
-        <!-- CARD 5: REAL LIFE ("Real life mein") -->
-        <article class="result-card real-life-card" id="card-real-life">
-          <div class="card-header">
-            <span class="header-icon" aria-hidden="true">🪔</span>
-            <h3 class="card-title" id="ui-reallife-title">Real life mein (Parampara aur Manyata)</h3>
+          <!-- Vertical Timeline Stream Container -->
+          <div class="timeline-stream-container" id="timeline-stream-container">
+            <!-- Timeline continuous connecting line -->
+            <div class="timeline-vertical-line"></div>
+
+            <!-- Dynamic or curated timeline events injected by app.js -->
+            <div id="timeline-events-content"></div>
           </div>
-          <p class="card-body-text" id="res-real-life"></p>
-        </article>
 
-        <!-- CARD 6: TRADITIONS DIFFER (CONDITIONAL) -->
-        <article class="result-card traditions-card" id="card-traditions" hidden>
-          <div class="card-header">
-            <span class="header-icon" aria-hidden="true">⚖️</span>
-            <h3 class="card-title" id="ui-traditions-title">Paramparaon mein bhed</h3>
-          </div>
-          <p class="card-body-text" id="res-traditions"></p>
-        </article>
-
-        <!-- CARD 7: FOLLOW-UP QUESTIONS -->
-        <article class="result-card followups-card" id="card-followups" hidden>
-          <div class="card-header">
-            <span class="header-icon" aria-hidden="true">✨</span>
-            <h3 class="card-title" id="ui-followups-title">Aage ke sawal</h3>
-          </div>
-          <div class="followup-chips-row" id="res-followups-list"></div>
-        </article>
-
-        <!-- ACTION BUTTONS: SHARE & COPY -->
-        <div class="result-action-bar">
-          <button type="button" class="action-btn share-btn" id="share-btn">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-              <circle cx="18" cy="5" r="3"></circle>
-              <circle cx="6" cy="12" r="3"></circle>
-              <circle cx="18" cy="19" r="3"></circle>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-            </svg>
-            <span id="ui-share-btn-text">Share karein</span>
-          </button>
-          <button type="button" class="action-btn copy-btn" id="copy-summary-btn">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            <span id="ui-copy-btn-text">Copy karein</span>
-          </button>
         </div>
 
       </div>
@@ -503,7 +587,7 @@
 
   </main>
 
-  <!-- Sticky Bottom Search Bar (Mobile Thumb-Friendly for Result Page) -->
+  <!-- Sticky Bottom Search Bar for Quick Navigation on Mobile -->
   <aside class="sticky-bottom-search" id="sticky-bottom-bar" hidden aria-label="Quick search navigation">
     <form class="sticky-search-form" id="sticky-search-form">
       <input
@@ -515,25 +599,17 @@
         placeholder="Naya sawal poochhein..."
         aria-label="Ask new question"
       />
-      <button type="button" class="sticky-mic-btn ripple-effect" id="sticky-mic-btn" aria-label="Search by voice" title="Voice Search">
-        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-          <line x1="12" y1="19" x2="12" y2="23"></line>
-          <line x1="8" y1="23" x2="16" y2="23"></line>
-        </svg>
+      <button type="button" class="sticky-mic-btn" id="sticky-mic-btn" aria-label="Search by voice" title="Voice Search">
+        <span class="material-symbols-outlined text-[18px]">mic</span>
         <span class="mic-pulse"></span>
       </button>
-      <button type="submit" class="sticky-search-btn ripple-effect" aria-label="Search">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
+      <button type="submit" class="sticky-search-btn" aria-label="Search">
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
       </button>
     </form>
   </aside>
 
-  <!-- Bottom Sheet / Drawer for Connection Map Node Details -->
+  <!-- Bottom Sheet / Drawer for Map Node Details (Fallback dialog) -->
   <div class="bottom-sheet-backdrop" id="bottom-sheet-backdrop" hidden></div>
   <div class="bottom-sheet" id="node-bottom-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-node-name">
     <div class="sheet-handle" aria-hidden="true"></div>
@@ -555,24 +631,18 @@
       </div>
       <button type="button" class="sheet-action-btn" id="sheet-explore-btn">
         <span id="ui-sheet-explore-text">Iske bare mein jaanein</span>
-        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-          <polyline points="12 5 19 12 12 19"></polyline>
-        </svg>
+        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
       </button>
     </div>
+  </div>
+
   <!-- Voice Recognition Listening Modal Overlay -->
   <div class="voice-modal-backdrop" id="voice-modal-backdrop" hidden></div>
   <div class="voice-modal" id="voice-modal" hidden role="dialog" aria-modal="true" aria-labelledby="voice-status-text">
     <div class="voice-flame-circle" aria-hidden="true">
       <div class="voice-pulse-ring"></div>
       <div class="voice-pulse-ring r2"></div>
-      <svg class="voice-mic-icon" viewBox="0 0 24 24" width="34" height="34" stroke="currentColor" stroke-width="2" fill="none">
-        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-        <line x1="12" y1="19" x2="12" y2="23"></line>
-        <line x1="8" y1="23" x2="16" y2="23"></line>
-      </svg>
+      <span class="material-symbols-outlined text-[34px] text-[#FF9933]">mic</span>
     </div>
     <h3 class="voice-title" id="voice-status-text">Sun raha hoon...</h3>
     <p class="voice-hint" id="voice-hint-text">Poochhein: "Krishna kaun hain?", "Ekadashi mahatmya"...</p>
@@ -584,18 +654,17 @@
       <span class="v-bar"></span>
       <span class="v-bar"></span>
     </div>
-    <button type="button" class="voice-cancel-btn ripple-effect" id="voice-cancel-btn">
+    <button type="button" class="voice-cancel-btn" id="voice-cancel-btn">
       <span id="ui-voice-cancel-text">Band karein</span>
     </button>
+  </div>
+
   <!-- Lightbox Modal for Wikipedia / Sacred Media -->
   <div class="lightbox-modal" id="lightbox-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lightbox-caption">
     <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
     <div class="lightbox-content">
-      <button type="button" class="lightbox-close-btn ripple-effect" id="lightbox-close-btn" aria-label="Close image preview">
-        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+      <button type="button" class="lightbox-close-btn" id="lightbox-close-btn" aria-label="Close image preview">
+        <span class="material-symbols-outlined text-[24px]">close</span>
       </button>
       <div class="lightbox-img-wrap">
         <img class="lightbox-img" id="lightbox-img" src="" alt="Enlarged view" />
@@ -607,10 +676,31 @@
     </div>
   </div>
 
+  <!-- Bookmarks Drawer Modal -->
+  <div class="bookmarks-drawer-backdrop" id="bookmarks-backdrop" hidden></div>
+  <div class="bookmarks-drawer" id="bookmarks-drawer" hidden role="dialog" aria-modal="true" aria-labelledby="bookmarks-title">
+    <div class="drawer-header">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[22px] text-[#B45309]">bookmark</span>
+        <h3 class="text-[18px] font-bold text-[#2B2118]" id="bookmarks-title">Aapke Sankalp & Sambandh</h3>
+      </div>
+      <button type="button" class="sheet-close-btn" id="bookmarks-close-btn" aria-label="Close bookmarks">✕</button>
+    </div>
+    <div class="drawer-body">
+      <p class="text-[14px] text-[#6B6258] mb-3">Saved relationships and sacred topics:</p>
+      <div class="bookmarks-list" id="bookmarks-list">
+        <!-- Rendered by app.js -->
+      </div>
+      <p class="text-[13px] text-[#6B6258] text-center mt-4" id="bookmarks-empty-notice">
+        Abhi koi sambandh bookmark nahi kiya gaya hai.
+      </p>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div class="toast-popup" id="toast-popup" role="status" aria-live="polite" hidden></div>
 
-  <!-- Footer -->
+  <!-- Application Footer -->
   <footer class="app-footer" role="contentinfo">
     <div class="footer-container">
       <p class="footer-disclaimer" id="ui-footer-disclaimer">
