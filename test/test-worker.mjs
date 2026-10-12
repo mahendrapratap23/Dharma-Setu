@@ -185,7 +185,9 @@ async function runTests() {
     method: "GET"
   });
   const mockCache = new MockKV();
-  const wikiRes = await worker.fetch(wikiReq, { CACHE: mockCache });
+  // Pass GEMINI_API_KEY so the Gemini interpreter can fix "drapati" → Draupadi
+  const wikiEnv = { CACHE: mockCache, ...(testApiKey ? { GEMINI_API_KEY: testApiKey } : {}) };
+  const wikiRes = await worker.fetch(wikiReq, wikiEnv);
   assert.strictEqual(wikiRes.status, 200);
   const wikiData = await wikiRes.json();
   console.log("   Wiki Title:", wikiData.title);
@@ -202,7 +204,8 @@ async function runTests() {
   const wikiReqCached = new Request("http://localhost/api/wiki?q=drapati&lang=hi", {
     method: "GET"
   });
-  const wikiResCached = await worker.fetch(wikiReqCached, { CACHE: mockCache });
+  // The second request should return a cache HIT (wiki2: key is populated by first call)
+  const wikiResCached = await worker.fetch(wikiReqCached, { CACHE: mockCache, GEMINI_API_KEY: testApiKey });
   assert.strictEqual(wikiResCached.status, 200);
   assert.strictEqual(wikiResCached.headers.get("X-Dharma-Wiki-Cache"), "HIT");
   console.log("   ✅ KV cache HIT verified on subsequent request!");

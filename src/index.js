@@ -336,18 +336,176 @@ async function callGeminiApi({ q, lang, context, wiki_context }, env) {
   }
 }
 
+// --- Wikipedia Resolver Constants ---
+
 const DHARMA_KEYWORDS = [
-  "hindu", "mahabharata", "ramayana", "deity", "goddess", "god",
-  "avatar", "temple", "sanskrit", "epic", "festival", "purana",
-  "vedic", "dharma", "lunar", "india", "sacred"
+  "hindu", "hinduism", "mahabharata", "ramayana", "deity", "goddess", "god",
+  "avatar", "avatara", "temple", "sanskrit", "epic", "festival", "purana",
+  "vedic", "veda", "dharma", "sacred", "mythology", "mythological",
+  "brahma", "vishnu", "shiva", "lakshmi", "durga", "saraswati",
+  "pandava", "kaurava", "arjuna", "krishna", "rama", "sita",
+  "india", "indian", "scriptural", "scripture", "bhagavad"
 ];
+
+// Reject pages that are clearly films, songs, media, or non-Dharmic topics
+const MEDIA_REJECT_PATTERN = /\b(film|movie|album|song|tv series|television series|actor|actress|novel|video game|band|footballer|cricketer|musician|singer|rapper|character from|2[0-9]{3} film|2[0-9]{3} album|animated series|web series|streaming|bollywood|tollywood|box office)\b/i;
 
 const WIKI_USER_AGENT = "DharmaSetu/1.0 (https://dharmasetu.org; feedback@dharmasetu.org)";
 const WIKI_CACHE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
+// Minimal JSON schema for the Gemini query-interpretation call
+const INTERPRET_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    in_scope: { type: "BOOLEAN" },
+    canonical_name: { type: "STRING" },
+    wiki_title: { type: "STRING" },
+    alt_titles: { type: "ARRAY", items: { type: "STRING" } },
+    topic_type: { type: "STRING" },
+    corrected_from: { type: "STRING" }
+  },
+  required: ["in_scope", "canonical_name", "wiki_title", "alt_titles", "topic_type"]
+};
+
+const INTERPRET_PROMPT = `You are a Hindu Dharma scholar. Given a user query (which may be misspelled, transliterated, or abbreviated), interpret it and return JSON.
+
+Rules:
+- Fix common transliterations: ashwathama/aswatthama = Ashwatthama, drapati/droupadi/draupdi = Draupadi, krishn = Krishna, etc.
+- wiki_title MUST be the exact English Wikipedia article title for the main Dharma topic (person, deity, event, scripture, place, concept).
+- alt_titles: up to 3 alternative Wikipedia titles to try if the main one fails.
+- in_scope: true only if the query relates to Hindu Dharma, Vedic tradition, Indian epics (Mahabharata, Ramayana), Puranas, deities, temples, Sanskrit texts, or related philosophy.
+- topic_type: one of "person", "deity", "scripture", "event", "place", "concept", "tradition".
+- corrected_from: original misspelling if you corrected it, otherwise empty string.
+
+Examples:
+- "ashwathama" → wiki_title: "Ashwatthama", canonical_name: "Ashwatthama"
+- "drapati" → wiki_title: "Draupadi", canonical_name: "Draupadi"
+- "krishna" → wiki_title: "Krishna", canonical_name: "Krishna"
+- "gita" → wiki_title: "Bhagavad Gita", canonical_name: "Bhagavad Gita"
+- "Messi" → in_scope: false`;
+
 /**
- * Searches and fetches Wikipedia summary for a topic.
- * Resolves misspellings (e.g. drapati -> Draupadi).
+ * Calls Gemini with a minimal schema to interpret the user query and get candidate Wikipedia titles.
+ * Returns { in_scope, canonical_name, wiki_title, alt_titles, topic_type, corrected_from }
+ */
+async function interpretQueryWithGemini(query, apiKey, model = "gemini-3.5-flash-lite") {
+  if (!apiKey) return null;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const payload = {
+    systemInstruction: { parts: [{ text: INTERPRET_PROMPT }] },
+    contents: [{ role: "user", parts: [{ text: `Query: "${query}"` }] }],
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: 256,
+      responseMimeType: "application/json",
+      responseSchema: INTERPRET_SCHEMA
+    }
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout for fast pre-call
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      console.warn(`Gemini interpret call failed with HTTP ${res.status}`);
+      return null;
+    }
+
+    const result = await res.json();
+    const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) return null;
+
+    return extractAndParseJson(rawText);
+  } catch (err) {
+    console.warn("interpretQueryWithGemini error (non-fatal):", err?.message || err);
+    return null;
+  }
+}
+
+/**
+ * Validates a Wikipedia summary object: rejects disambiguation, media/entertainment pages,
+ * and pages with no Dharmic content.
+ * Returns true if the page is a valid Dharmic topic.
+ */
+function isValidDharmicPage(sum) {
+  if (!sum || sum.type === "disambiguation" || !sum.extract) return false;
+
+  // Reject media/entertainment pages
+  const descAndExtract = `${sum.description || ""} ${sum.extract || ""}`;
+  if (MEDIA_REJECT_PATTERN.test(descAndExtract)) {
+    console.log(`  [Wiki Validator] Rejected "${sum.title}" — media/entertainment match`);
+    return false;
+  }
+
+  // Must have at least one Dharma keyword in description or extract
+  const combined = descAndExtract.toLowerCase();
+  const hasDharmaKeyword = DHARMA_KEYWORDS.some(k => combined.includes(k));
+  if (!hasDharmaKeyword) {
+    console.log(`  [Wiki Validator] Rejected "${sum.title}" — no Dharma keywords found`);
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Fetches a Wikipedia REST v1 summary for a given exact title.
+ * Returns the summary JSON or null on failure.
+ */
+async function fetchWikiSummaryByTitle(title) {
+  if (!title) return null;
+  try {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const res = await fetch(url, { headers: { "User-Agent": WIKI_USER_AGENT } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn(`fetchWikiSummaryByTitle error for "${title}":`, e?.message);
+    return null;
+  }
+}
+
+/**
+ * Searches Wikipedia title search API and returns ranked page list.
+ */
+async function searchWikiTitles(searchQ, limit = 5) {
+  try {
+    const url = `https://en.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(searchQ)}&limit=${limit}`;
+    const res = await fetch(url, { headers: { "User-Agent": WIKI_USER_AGENT } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.pages || [];
+  } catch (e) {
+    console.warn("searchWikiTitles error:", e?.message);
+    return [];
+  }
+}
+
+/**
+ * Validates an image URL — only allow common image extensions.
+ */
+function isValidImageUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url.split("#")[0]);
+}
+
+/**
+ * Resolves and fetches a Wikipedia summary for a Dharmic topic.
+ * Strategy:
+ *   1. Check KV cache
+ *   2. Ask Gemini to interpret the query → get exact wiki_title + alt_titles
+ *   3. Try each title: fetch summary → validate (no media, has Dharma keywords)
+ *   4. Last resort: Wikipedia fuzzy search for "{query} Hindu mythology"
+ *   5. Store in KV cache (30 days)
  */
 export async function getWikiSummary(env, query, lang = "en") {
   if (!query || typeof query !== "string") return { found: false };
@@ -355,147 +513,186 @@ export async function getWikiSummary(env, query, lang = "en") {
   if (!trimmed) return { found: false };
 
   const normalized = normalizeQuery(trimmed);
-  const cacheKey = `wiki:${lang}:${normalized}`;
+  const cacheKey = `wiki2:${lang}:${normalized}`; // wiki2 prefix for new resolver
 
-  // 1. Check KV cache (30 days TTL)
+  // 1. Check KV cache
   if (env?.CACHE) {
     try {
       const cached = await env.CACHE.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
+      if (cached) return JSON.parse(cached);
     } catch (e) {
       console.warn("KV wiki cache read error:", e);
     }
   }
 
-  try {
-    let searchQ = trimmed;
-    // Map common aliases where Wikipedia article is differently named
-    if (normalized === "ram") searchQ = "Rama";
+  let candidateTitles = [];
 
-    // Call MediaWiki title search
-    const searchUrl = `https://en.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(searchQ)}&limit=5`;
-    const searchRes = await fetch(searchUrl, {
-      headers: { "User-Agent": WIKI_USER_AGENT }
-    });
+  // 2. Ask Gemini to interpret the query (non-fatal if it fails)
+  // Use lite model for speed; fall back to configured model if lite unavailable
+  const interpretModel = env?.GEMINI_MODEL
+    ? (env.GEMINI_MODEL === "gemini-3.5-flash" ? "gemini-3.5-flash-lite" : env.GEMINI_MODEL)
+    : "gemini-3.5-flash-lite";
+  const interpretation = await interpretQueryWithGemini(trimmed, env?.GEMINI_API_KEY, interpretModel);
+  console.log(`[Wiki Resolver] Query: "${trimmed}" → Gemini interpretation:`, JSON.stringify(interpretation));
 
-    if (!searchRes.ok) {
-      return { found: false };
+  if (interpretation) {
+    if (!interpretation.in_scope) {
+      // Explicitly out of scope (e.g. "Messi")
+      const result = { found: false };
+      if (env?.CACHE) {
+        try { await env.CACHE.put(cacheKey, JSON.stringify(result), { expirationTtl: WIKI_CACHE_TTL_SECONDS }); } catch (_) {}
+      }
+      return result;
     }
 
-    const searchData = await searchRes.json();
-    const pages = searchData.pages || [];
-    if (pages.length === 0) {
-      return { found: false };
+    // Build candidate list from Gemini's response
+    if (interpretation.wiki_title) candidateTitles.push(interpretation.wiki_title);
+    if (Array.isArray(interpretation.alt_titles)) {
+      interpretation.alt_titles.forEach(t => { if (t && !candidateTitles.includes(t)) candidateTitles.push(t); });
     }
-
-    // Rank candidates: prioritize exact matches and dharmic relevance
-    pages.sort((a, b) => {
-      const score = (p) => {
-        let s = 0;
-        const t = (p.title || "").toLowerCase();
-        const qLower = normalized;
-        if (t === qLower) s += 100;
-        else if (t.startsWith(qLower) || qLower.startsWith(t)) s += 50;
-        else if (t.includes(qLower)) s += 25;
-        const desc = (p.description || "").toLowerCase();
-        if (DHARMA_KEYWORDS.some(k => desc.includes(k))) s += 40;
-        return s;
-      };
-      return score(b) - score(a);
+    // Also add canonical_name as a fallback candidate
+    if (interpretation.canonical_name && !candidateTitles.includes(interpretation.canonical_name)) {
+      candidateTitles.push(interpretation.canonical_name);
+    }
+  } else {
+    // Gemini unavailable — do a fuzzy Wikipedia title search as fallback
+    const fuzzyPages = await searchWikiTitles(trimmed, 5);
+    fuzzyPages.forEach(p => {
+      const t = p.key || p.title;
+      if (t && !candidateTitles.includes(t)) candidateTitles.push(t);
     });
+    // Always include basic alias
+    if (normalized === "ram" && !candidateTitles.includes("Rama")) candidateTitles.push("Rama");
+  }
 
-    // Try candidates in order
-    let bestEnSummary = null;
-    for (const page of pages) {
-      const sumUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(page.key || page.title)}`;
-      const sumRes = await fetch(sumUrl, {
-        headers: { "User-Agent": WIKI_USER_AGENT }
-      });
-      if (!sumRes.ok) continue;
-      const sum = await sumRes.json();
-      if (sum.type === "disambiguation" || !sum.extract) continue;
-      bestEnSummary = sum;
+  // 3. Try each candidate title directly
+  let bestSummary = null;
+  for (const title of candidateTitles) {
+    const sum = await fetchWikiSummaryByTitle(title);
+    if (isValidDharmicPage(sum)) {
+      bestSummary = sum;
+      console.log(`[Wiki Resolver] ✅ Accepted: "${sum.title}"`);
       break;
+    } else if (sum) {
+      console.log(`[Wiki Resolver] ❌ Rejected candidate: "${title}"`);
     }
+  }
 
-    if (!bestEnSummary) {
-      return { found: false };
+  // 4. Last-resort: fuzzy Wikipedia title search (without Gemini's guidance)
+  if (!bestSummary) {
+    const searchTerm = interpretation?.canonical_name || trimmed;
+    // Try plain fuzzy search first
+    console.log(`[Wiki Resolver] Trying last-resort fuzzy search for "${searchTerm}"...`);
+    const fallbackPages = await searchWikiTitles(searchTerm, 5);
+    for (const page of fallbackPages) {
+      const t = page.key || page.title;
+      if (candidateTitles.includes(t)) continue; // already tried
+      const sum = await fetchWikiSummaryByTitle(t);
+      if (isValidDharmicPage(sum)) {
+        bestSummary = sum;
+        console.log(`[Wiki Resolver] ✅ Accepted from fallback fuzzy search: "${sum.title}"`);
+        break;
+      }
     }
+  }
 
-    let finalTitle = bestEnSummary.title;
-    let finalExtract = bestEnSummary.extract;
-    let finalPageUrl = bestEnSummary.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(bestEnSummary.title)}`;
-    let finalImageUrl = bestEnSummary.originalimage?.source || bestEnSummary.thumbnail?.source || null;
-    let finalWikiLang = "en";
+  // 5. Even-last-resort: search with "Hindu mythology" appended
+  if (!bestSummary) {
+    const searchTerm = interpretation?.canonical_name || trimmed;
+    console.log(`[Wiki Resolver] Trying mythology-augmented search for "${searchTerm} Hindu mythology"...`);
+    const mythPages = await searchWikiTitles(`${searchTerm} Hindu mythology`, 5);
+    for (const page of mythPages) {
+      const sum = await fetchWikiSummaryByTitle(page.key || page.title);
+      if (isValidDharmicPage(sum)) {
+        bestSummary = sum;
+        console.log(`[Wiki Resolver] ✅ Accepted from mythology-augmented search: "${sum.title}"`);
+        break;
+      }
+    }
+  }
 
-    // If lang is "hi" or "hinglish", try Hindi Wikipedia summary
-    if (lang === "hi" || lang === "hinglish") {
-      try {
-        const llUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=hi&titles=${encodeURIComponent(bestEnSummary.title)}&format=json`;
-        const llRes = await fetch(llUrl, {
-          headers: { "User-Agent": WIKI_USER_AGENT }
-        });
-        if (llRes.ok) {
-          const llData = await llRes.json();
-          const queryPages = llData.query?.pages || {};
-          let hiTitle = null;
-          for (const id in queryPages) {
-            if (queryPages[id].langlinks && queryPages[id].langlinks.length > 0) {
-              hiTitle = queryPages[id].langlinks[0]["*"];
-              break;
-            }
+  if (!bestSummary) {
+    console.log(`[Wiki Resolver] No valid Dharmic Wikipedia page found for: "${trimmed}"`);
+    const result = { found: false };
+    if (env?.CACHE) {
+      try { await env.CACHE.put(cacheKey, JSON.stringify(result), { expirationTtl: 60 * 60 }); } catch (_) {} // cache miss for 1h
+    }
+    return result;
+  }
+
+  // 5. Build the result
+  let finalTitle = bestSummary.title;
+  let finalExtract = bestSummary.extract;
+  let finalPageUrl = bestSummary.content_urls?.desktop?.page
+    || `https://en.wikipedia.org/wiki/${encodeURIComponent(bestSummary.title)}`;
+  let finalImageUrl = null;
+  let finalWikiLang = "en";
+
+  // Prefer originalimage > thumbnail, and validate the URL
+  const rawImageUrl = bestSummary.originalimage?.source || bestSummary.thumbnail?.source || null;
+  if (isValidImageUrl(rawImageUrl)) {
+    finalImageUrl = rawImageUrl;
+  }
+
+  // 6. Try Hindi Wikipedia if requested
+  if (lang === "hi" || lang === "hinglish") {
+    try {
+      const llUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=hi&titles=${encodeURIComponent(bestSummary.title)}&format=json`;
+      const llRes = await fetch(llUrl, { headers: { "User-Agent": WIKI_USER_AGENT } });
+      if (llRes.ok) {
+        const llData = await llRes.json();
+        const queryPages = llData.query?.pages || {};
+        let hiTitle = null;
+        for (const id in queryPages) {
+          if (queryPages[id].langlinks?.length > 0) {
+            hiTitle = queryPages[id].langlinks[0]["*"];
+            break;
           }
-          if (hiTitle) {
-            const hiSumUrl = `https://hi.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hiTitle)}`;
-            const hiSumRes = await fetch(hiSumUrl, {
-              headers: { "User-Agent": WIKI_USER_AGENT }
-            });
-            if (hiSumRes.ok) {
-              const hiSum = await hiSumRes.json();
-              if (hiSum.type !== "disambiguation" && hiSum.extract) {
-                finalTitle = hiSum.title;
-                finalExtract = hiSum.extract;
-                finalPageUrl = hiSum.content_urls?.desktop?.page || `https://hi.wikipedia.org/wiki/${encodeURIComponent(hiTitle)}`;
-                finalWikiLang = "hi";
-                if (!finalImageUrl && hiSum.thumbnail?.source) {
-                  finalImageUrl = hiSum.thumbnail.source;
-                }
+        }
+        if (hiTitle) {
+          const hiSumUrl = `https://hi.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hiTitle)}`;
+          const hiSumRes = await fetch(hiSumUrl, { headers: { "User-Agent": WIKI_USER_AGENT } });
+          if (hiSumRes.ok) {
+            const hiSum = await hiSumRes.json();
+            if (hiSum.type !== "disambiguation" && hiSum.extract) {
+              finalTitle = hiSum.title;
+              finalExtract = hiSum.extract;
+              finalPageUrl = hiSum.content_urls?.desktop?.page || `https://hi.wikipedia.org/wiki/${encodeURIComponent(hiTitle)}`;
+              finalWikiLang = "hi";
+              // Keep English image if Hindi has none or an invalid one
+              const hiImg = hiSum.originalimage?.source || hiSum.thumbnail?.source;
+              if (!finalImageUrl && isValidImageUrl(hiImg)) {
+                finalImageUrl = hiImg;
               }
             }
           }
         }
-      } catch (hiErr) {
-        console.warn("Hindi Wikipedia summary fetch error:", hiErr);
       }
+    } catch (hiErr) {
+      console.warn("Hindi Wikipedia fetch error (non-fatal):", hiErr?.message);
     }
-
-    const result = {
-      found: true,
-      title: finalTitle,
-      extract: finalExtract,
-      imageUrl: finalImageUrl,
-      pageUrl: finalPageUrl,
-      wikiLang: finalWikiLang
-    };
-
-    // Cache in KV for 30 days
-    if (env?.CACHE) {
-      try {
-        await env.CACHE.put(cacheKey, JSON.stringify(result), {
-          expirationTtl: WIKI_CACHE_TTL_SECONDS
-        });
-      } catch (putErr) {
-        console.warn("KV wiki cache write error:", putErr);
-      }
-    }
-
-    return result;
-  } catch (err) {
-    console.error("Wikipedia search error:", err);
-    return { found: false };
   }
+
+  const result = {
+    found: true,
+    title: finalTitle,
+    extract: finalExtract,
+    imageUrl: finalImageUrl,
+    pageUrl: finalPageUrl,
+    wikiLang: finalWikiLang,
+    canonicalName: interpretation?.canonical_name || finalTitle
+  };
+
+  // 7. Cache in KV (30 days)
+  if (env?.CACHE) {
+    try {
+      await env.CACHE.put(cacheKey, JSON.stringify(result), { expirationTtl: WIKI_CACHE_TTL_SECONDS });
+    } catch (putErr) {
+      console.warn("KV wiki cache write error:", putErr);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -511,7 +708,8 @@ async function handleWiki(request, env, corsHeaders) {
   }
 
   const normalized = normalizeQuery(q);
-  const cacheKey = `wiki:${lang}:${normalized}`;
+  // Use wiki2: prefix (matches the new resolver's cache key)
+  const cacheKey = `wiki2:${lang}:${normalized}`;
   let isCached = false;
   if (env?.CACHE) {
     try {
